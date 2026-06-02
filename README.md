@@ -46,7 +46,7 @@ Perfect for:
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/your-username/memoman.git
+git clone https://github.com/T800-M101/memoMan.git
 
 # 2. Enter the directory
 cd memoman
