@@ -1,0 +1,45 @@
+<div class="response-section">
+  <div class="response-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div class="response-meta d-flex gap-4">
+      <span><i class="fas fa-circle text-success me-1" style="font-size: 10px;"></i> <strong>Status:</strong> 200 OK</span>
+      <span><i class="fas fa-clock me-1"></i> <strong>Time:</strong> 120ms</span>
+      <span><i class="fas fa-database me-1"></i> <strong>Size:</strong> 1.2KB</span>
+    </div>
+    <button class="btn btn-sm btn-outline-secondary">
+      <i class="fas fa-save me-1"></i> Save Response
+    </button>
+  </div>
+  <div class="response-body">
+    <div style="font-family: 'Courier New', monospace; font-size: 13px; line-height: 1.6; white-space: pre-wrap;">
+      &lcub;
+        "status": "success",
+        "data": &lcub;
+          "users": [
+            &lcub;
+              "id": 1,
+              "name": "John Doe",
+              "email": "john@example.com",
+              "createdAt": "2024-01-15T10:30:00Z"
+            &rcub;,
+            &lcub;
+              "id": 2,
+              "name": "Jane Smith",
+              "email": "jane@example.com",
+              "createdAt": "2024-01-16T14:20:00Z"
+            &rcub;,
+            &lcub;
+              "id": 3,
+              "name": "Bob Johnson",
+              "email": "bob@example.com",
+              "createdAt": "2024-01-17T09:45:00Z"
+            &rcub;
+          ],
+          "total": 3,
+          "page": 1,
+          "limit": 10
+        &rcub;,
+        "message": "Users retrieved successfully"
+      &rcub;
+    </div>
+  </div>
+</div>

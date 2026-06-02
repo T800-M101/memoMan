@@ -1,0 +1,106 @@
+<!-- TABS -->
+<ul class="nav nav-tabs mb-3" id="requestTabs" role="tablist">
+  <li class="nav-item" role="presentation">
+    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#params" type="button" role="tab">
+      <i class="fas fa-table me-1"></i> Params
+    </button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#headers" type="button" role="tab">
+      <i class="fas fa-heading me-1"></i> Headers
+    </button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#auth" type="button" role="tab">
+      <i class="fas fa-lock me-1"></i> Authorization
+    </button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#body" type="button" role="tab">
+      <i class="fas fa-code me-1"></i> Body
+    </button>
+  </li>
+</ul>
+
+<!-- CONTENIDO DE TABS -->
+<div class="tab-content mb-4" id="requestTabsContent">
+  <!-- Params Tab -->
+  <div class="tab-pane fade show active" id="params" role="tabpanel">
+    <table class="table params-table mb-0">
+      <thead>
+        <tr>
+          <th style="width: 33%">KEY</th>
+          <th style="width: 33%">VALUE</th>
+          <th style="width: 34%">DESCRIPTION</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><input type="text" placeholder="page" value="page"></td>
+          <td><input type="text" placeholder="1" value="1"></td>
+          <td><input type="text" placeholder="Pagination" value="Pagination"></td>
+        </tr>
+        <tr>
+          <td><input type="text" placeholder="limit" value="limit"></td>
+          <td><input type="text" placeholder="10" value="10"></td>
+          <td><input type="text" placeholder="Items per page" value="Items per page"></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Headers Tab -->
+  <div class="tab-pane fade" id="headers" role="tabpanel">
+    <table class="table params-table mb-0">
+      <thead>
+        <tr>
+          <th style="width: 33%">KEY</th>
+          <th style="width: 33%">VALUE</th>
+          <th style="width: 34%">DESCRIPTION</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><input type="text" placeholder="Content-Type" value="Content-Type"></td>
+          <td><input type="text" placeholder="application/json" value="application/json"></td>
+          <td><input type="text" placeholder="Content type header"></td>
+        </tr>
+        <tr>
+          <td><input type="text" placeholder="Accept" value="Accept"></td>
+          <td><input type="text" placeholder="application/json" value="application/json"></td>
+          <td><input type="text" placeholder="Accepted response format"></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Authorization Tab -->
+  <div class="tab-pane fade" id="auth" role="tabpanel">
+    <div class="mb-3">
+      <label class="form-label fw-semibold mb-2">
+        <i class="fas fa-key me-1 text-info"></i> Bearer Token
+      </label>
+      <input type="text" class="form-control bearer-input" placeholder="your-token-here"
+        value="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...">
+      <div class="form-text mt-2">
+        <small>Token will be sent as: <code>Authorization: Bearer &lt;token&gt;</code></small>
+      </div>
+    </div>
+  </div>
+
+  <!-- Body Tab -->
+  <div class="tab-pane fade" id="body" role="tabpanel">
+    <label class="form-label fw-semibold mb-2">
+      <i class="fas fa-brackets-curly me-1 text-info"></i> JSON Body
+    </label>
+    <textarea class="form-control font-monospace" rows="8" placeholder='{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "role": "admin"
+}' style="font-family: 'Courier New', monospace; font-size: 13px;">{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "role": "admin"
+}</textarea>
+  </div>
+</div>

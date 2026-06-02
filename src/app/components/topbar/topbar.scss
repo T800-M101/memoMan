@@ -1,0 +1,22 @@
+.topbar {
+  background: linear-gradient(135deg, #00acc1, #00bcd4);
+  height: 60px;
+  padding: 0 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+  .btn-link {
+    color: white;
+    text-decoration: none;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+    }
+  }
+
+  .logo-text {
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+}

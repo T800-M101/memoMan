@@ -1,0 +1,31 @@
+.response-section {
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #e9ecef;
+  overflow: hidden;
+}
+
+.response-header {
+  background: #f8f9fa;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.response-meta {
+  span {
+    font-size: 0.875rem;
+    color: #6c757d;
+  }
+
+  strong {
+    color: #212529;
+  }
+}
+
+.response-body {
+  background: #1e1e1e;
+  color: #d4d4d4;
+  padding: 1.25rem;
+  max-height: 400px;
+  overflow: auto;
+}
