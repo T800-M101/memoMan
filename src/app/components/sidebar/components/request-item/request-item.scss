@@ -1,0 +1,33 @@
+.request-item {
+  width: 100%;
+  transition: background 0.2s;
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 10px 12px;
+  border: none;
+  background: transparent;
+
+  &:hover {
+    background: #e3f2fd;
+  }
+}
+
+.method-badge {
+  font-weight: 700;
+  font-size: 0.75rem;
+  min-width: 65px;
+}
+
+.method-get { color: #00acc1; }
+.method-post { color: #43a047; }
+.method-put { color: #fb8c00; }
+.method-delete { color: #e53935; }
+
+.request-name {
+  font-weight: 500;
+  color: #2c3e50;
+}
+
+.request-description {
+  font-size: 0.7rem;
+}

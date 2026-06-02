@@ -1,0 +1,6 @@
+<button class="request-item d-flex align-items-center gap-3" (click)="handleClick()">
+  <span class="method-badge fw-bold" [ngClass]="getMethodClass()">
+    {{ method() }}
+  </span>
+  <span class="request-name">{{ name() }}</span>
+</button>

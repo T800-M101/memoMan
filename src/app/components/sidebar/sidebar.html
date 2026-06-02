@@ -1,14 +1,24 @@
 <div class="sidebar">
   <div class="p-3">
-    <!-- New Request Button -->
-    <button class="btn btn-primary w-100 new-request-btn mb-4">
-      <i class="fas fa-plus me-2"></i> New Request
-    </button>
+    <!-- Action Buttons Row -->
+    <div class="d-flex gap-2 mb-4">
+      <!-- New Request Button (más pequeño) -->
+      <button class="btn btn-primary new-request-btn" (click)="handleNewRequest()">
+        <i class="fas fa-plus me-1"></i> New
+      </button>
+
+      <!-- Import Button -->
+      <button class="btn btn-outline-secondary import-btn" (click)="handleImport()">
+        <i class="fas fa-upload me-1"></i> Import
+      </button>
+
+    </div>
 
     <!-- Search Field -->
     <div class="mb-4 position-relative">
       <i class="fas fa-search search-icon"></i>
-      <input type="text" class="form-control search-input" placeholder="Search collections">
+      <input type="text" class="form-control search-input" placeholder="Search collections"
+        (input)="handleSearch($event)">
     </div>
 
     <!-- Collections Title -->
@@ -16,38 +26,15 @@
       Collections
     </div>
 
-    <!-- Accordion de Colecciones -->
+    <!-- Collections -->
     <div class="accordion" id="collectionsAccordion">
-      <div class="accordion-item border rounded-3 mb-2">
-        <h2 class="accordion-header">
-          <button class="accordion-button py-3 bg-white fw-semibold" type="button" data-bs-toggle="collapse"
-            data-bs-target="#usersApi">
-            <i class="fas fa-folder me-2 text-info"></i> Users API
-          </button>
-        </h2>
-        <div id="usersApi" class="accordion-collapse collapse show" data-bs-parent="#collectionsAccordion">
-          <div class="accordion-body p-0">
-            <div class="list-group list-group-flush">
-              <button class="list-group-item list-group-item-action border-0 request-item d-flex align-items-center gap-3">
-                <span class="method-badge method-get fw-bold">GET</span>
-                <span>Get All Users</span>
-              </button>
-              <button class="list-group-item list-group-item-action border-0 request-item d-flex align-items-center gap-3">
-                <span class="method-badge method-post fw-bold">POST</span>
-                <span>Create User</span>
-              </button>
-              <button class="list-group-item list-group-item-action border-0 request-item d-flex align-items-center gap-3">
-                <span class="method-badge method-put fw-bold">PUT</span>
-                <span>Update User</span>
-              </button>
-              <button class="list-group-item list-group-item-action border-0 request-item d-flex align-items-center gap-3">
-                <span class="method-badge method-delete fw-bold">DELETE</span>
-                <span>Delete User</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+      @for (collection of collections(); track collection.title) {
+      <app-collection-item
+        [title]="collection.title"
+        [icon]="collection.icon"
+        [requests]="collection.requests">
+      </app-collection-item>
+      }
     </div>
   </div>
 </div>

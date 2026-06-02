@@ -1,0 +1,102 @@
+.accordion-item {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  margin-bottom: 0.75rem;
+  overflow: hidden;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.accordion-header {
+  margin: 0;
+}
+
+.accordion-button {
+  background-color: white;
+  padding: 1rem 1.25rem;
+  font-weight: 600;
+  color: #1e293b;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background-color: #f8fafc;
+  }
+
+  &:focus {
+    box-shadow: none;
+    border-color: transparent;
+  }
+
+  &::after {
+    background-size: 0.875rem;
+    transition: transform 0.2s ease;
+  }
+
+  &:not(.collapsed) {
+    background-color: white;
+    color: #00bcd4;
+    box-shadow: none;
+
+    &::after {
+      transform: rotate(-180deg);
+    }
+  }
+
+  .fa-folder {
+    font-size: 1rem;
+  }
+}
+
+.accordion-collapse {
+  transition: all 0.2s ease;
+
+  &.show {
+    border-top: 1px solid #eef2f4;
+  }
+}
+
+.accordion-body {
+  padding: 0;
+}
+
+.list-group {
+  border-radius: 0;
+}
+
+.list-group-flush {
+  .list-group-item {
+    border-left: none;
+    border-right: none;
+    border-bottom: 1px solid #f1f5f9;
+
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+}
+
+// Badge para número de requests (opcional)
+.badge {
+  background-color: #e2e8f0;
+  color: #475569;
+  font-size: 0.7rem;
+  font-weight: 500;
+  padding: 0.25rem 0.5rem;
+  border-radius: 20px;
+  margin-left: 0.5rem;
+}
+
+// Animación hover para el accordion-button
+.accordion-button {
+  position: relative;
+
+  i {
+    transition: transform 0.2s ease;
+  }
+
+  &:hover i {
+    transform: translateX(2px);
+  }
+}
