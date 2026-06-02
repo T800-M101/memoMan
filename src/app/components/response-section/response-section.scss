@@ -11,6 +11,10 @@
   border-bottom: 1px solid #e9ecef;
 }
 
+.status-icon {
+  font-size: 10px;
+}
+
 .response-meta {
   span {
     font-size: 0.875rem;
@@ -28,4 +32,11 @@
   padding: 1.25rem;
   max-height: 400px;
   overflow: auto;
+}
+
+.response-json {
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  white-space: pre-wrap;
 }

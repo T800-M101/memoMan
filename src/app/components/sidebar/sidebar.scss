@@ -1,9 +1,14 @@
 .sidebar {
+  width: 330px;
+  min-width: 310px;
   background: white;
   border-right: 1px solid #dee2e6;
   overflow-y: auto;
+  height: 100%;
 
   .new-request-btn {
+    background: #00bcd4;
+    height: 48px;
     border-radius: 12px;
     font-weight: 600;
     transition: all 0.2s;
@@ -12,6 +17,18 @@
       transform: translateY(-1px);
       box-shadow: 0 4px 12px rgba(0, 188, 212, 0.3);
     }
+  }
+
+  .search-icon {
+    position: absolute;
+    left: 12px;
+    top: 12px;
+    color: #adb5bd;
+  }
+
+  .search-input {
+    padding-left: 38px;
+    border-radius: 12px;
   }
 
   .request-item {

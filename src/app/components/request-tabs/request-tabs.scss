@@ -25,6 +25,7 @@
 
 .params-table {
   th {
+    width: 33%;
     background: #f8f9fa;
     font-size: 0.75rem;
     font-weight: 700;
@@ -32,6 +33,10 @@
     text-transform: uppercase;
     padding: 0.75rem;
   }
+
+  th:first-child { width: 33%; }
+  th:nth-child(2) { width: 33%; }
+  th:last-child { width: 34%; }
 
   td {
     padding: 0.5rem;
@@ -61,4 +66,9 @@
     outline: none;
     box-shadow: 0 0 0 0.2rem rgba(0, 188, 212, 0.25);
   }
+}
+
+.json-textarea {
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
 }
