@@ -72,3 +72,31 @@
   font-family: 'Courier New', monospace;
   font-size: 13px;
 }
+
+// Additional styles for the cURL button
+.btn-outline-secondary {
+  transition: all 0.2s ease;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.75rem;
+
+  i {
+    font-size: 0.7rem;
+  }
+
+  &:hover:not(:disabled) {
+    background: #00bcd4;
+    border-color: #00bcd4;
+    color: white;
+    transform: translateY(-1px);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.d-flex.justify-content-end {
+  margin-bottom: 0.5rem;
+}

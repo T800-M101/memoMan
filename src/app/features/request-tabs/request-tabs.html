@@ -1,106 +1,155 @@
-<!-- TABS -->
-<ul class="nav nav-tabs mb-3" id="requestTabs" role="tablist">
-  <li class="nav-item" role="presentation">
-    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#params" type="button" role="tab">
-      <i class="fas fa-table me-1"></i> Params
-    </button>
-  </li>
-  <li class="nav-item" role="presentation">
-    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#headers" type="button" role="tab">
-      <i class="fas fa-heading me-1"></i> Headers
-    </button>
-  </li>
-  <li class="nav-item" role="presentation">
-    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#auth" type="button" role="tab">
-      <i class="fas fa-lock me-1"></i> Authorization
-    </button>
-  </li>
-  <li class="nav-item" role="presentation">
-    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#body" type="button" role="tab">
-      <i class="fas fa-code me-1"></i> Body
-    </button>
-  </li>
-</ul>
+<form [formGroup]="form">
 
-<!-- TABS CONTENT -->
-<div class="tab-content mb-4" id="requestTabsContent">
-  <!-- Params Tab -->
-  <div class="tab-pane fade show active" id="params" role="tabpanel">
-    <table class="table params-table mb-0">
-      <thead>
-        <tr>
-          <th>KEY</th>
-          <th>VALUE</th>
-          <th>DESCRIPTION</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td><input type="text" placeholder="page" value="page"></td>
-          <td><input type="text" placeholder="1" value="1"></td>
-          <td><input type="text" placeholder="Pagination" value="Pagination"></td>
-        </tr>
-        <tr>
-          <td><input type="text" placeholder="limit" value="limit"></td>
-          <td><input type="text" placeholder="10" value="10"></td>
-          <td><input type="text" placeholder="Items per page" value="Items per page"></td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+  <!-- TABS NAV sin cambios -->
+  <ul class="nav nav-tabs mb-3" id="requestTabs" role="tablist">
+    <li class="nav-item">
+      <button class="nav-link" [class.active]="activeTab() === 'params'" (click)="setActiveTab('params')" type="button">
+        <i class="fas fa-table me-1"></i> Params
+      </button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" [class.active]="activeTab() === 'headers'" (click)="setActiveTab('headers')" type="button">
+        <i class="fas fa-heading me-1"></i> Headers
+      </button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" [class.active]="activeTab() === 'auth'" (click)="setActiveTab('auth')" type="button">
+        <i class="fas fa-lock me-1"></i> Authorization
+      </button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" [class.active]="activeTab() === 'body'" (click)="setActiveTab('body')" type="button">
+        <i class="fas fa-code me-1"></i> Body
+      </button>
+    </li>
+  </ul>
 
-  <!-- Headers Tab -->
-  <div class="tab-pane fade" id="headers" role="tabpanel">
-    <table class="table params-table mb-0">
-      <thead>
-        <tr>
-          <th>KEY</th>
-          <th>VALUE</th>
-          <th>DESCRIPTION</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td><input type="text" placeholder="Content-Type" value="Content-Type"></td>
-          <td><input type="text" placeholder="application/json" value="application/json"></td>
-          <td><input type="text" placeholder="Content type header"></td>
-        </tr>
-        <tr>
-          <td><input type="text" placeholder="Accept" value="Accept"></td>
-          <td><input type="text" placeholder="application/json" value="application/json"></td>
-          <td><input type="text" placeholder="Accepted response format"></td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+  <div class="tab-content mb-4">
 
-  <!-- Authorization Tab -->
-  <div class="tab-pane fade" id="auth" role="tabpanel">
-    <div class="mb-3">
-      <label class="form-label fw-semibold mb-2">
-        <i class="fas fa-key me-1 text-info"></i> Bearer Token
-      </label>
-      <input type="text" class="form-control bearer-input" placeholder="your-token-here"
-        value="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...">
-      <div class="form-text mt-2">
-        <small>Token will be sent as: <code>Authorization: Bearer &lt;token&gt;</code></small>
+    <!-- PARAMS TAB -->
+    <div class="tab-pane" [class.show]="activeTab() === 'params'" [class.active]="activeTab() === 'params'">
+      <div class="d-flex justify-content-end mb-2">
+        <button type="button" class="btn btn-sm btn-outline-secondary" (click)="copyCurlToClipboard()" [disabled]="isCopying()">
+          <i class="fas fa-terminal me-1"></i> {{ isCopying() ? 'Copied!' : 'Copy cURL' }}
+        </button>
+      </div>
+      <table class="table params-table mb-0">
+        <thead>
+          <tr><th>KEY</th><th>VALUE</th><th>DESCRIPTION</th><th style="width: 40px"></th></tr>
+        </thead>
+        <tbody formArrayName="params">
+          @for (param of params.controls; track $index) {
+            <tr [formGroupName]="$index">
+              <td><input type="text" formControlName="key" placeholder="Key"></td>
+              <td><input type="text" formControlName="value" placeholder="Value"></td>
+              <td><input type="text" formControlName="description" placeholder="Description"></td>
+              <td>
+                <button type="button" class="btn btn-sm btn-link text-danger" (click)="removeParamRow($index)">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+      <button type="button" class="btn btn-sm btn-link mt-2" (click)="addParamRow()">
+        <i class="fas fa-plus me-1"></i> Add Parameter
+      </button>
+    </div>
+
+    <!-- HEADERS TAB -->
+    <div class="tab-pane" [class.show]="activeTab() === 'headers'" [class.active]="activeTab() === 'headers'">
+      <div class="d-flex justify-content-end mb-2">
+        <button type="button" class="btn btn-sm btn-outline-secondary" (click)="copyCurlToClipboard()" [disabled]="isCopying()">
+          <i class="fas fa-terminal me-1"></i> {{ isCopying() ? 'Copied!' : 'Copy cURL' }}
+        </button>
+      </div>
+      <table class="table params-table mb-0">
+        <thead>
+          <tr><th>KEY</th><th>VALUE</th><th>DESCRIPTION</th><th style="width: 40px"></th></tr>
+        </thead>
+        <tbody formArrayName="headers">
+          @for (header of headers.controls; track $index) {
+            <tr [formGroupName]="$index">
+              <td><input type="text" formControlName="key" placeholder="Key"></td>
+              <td><input type="text" formControlName="value" placeholder="Value"></td>
+              <td><input type="text" formControlName="description" placeholder="Description"></td>
+              <td>
+                <button type="button" class="btn btn-sm btn-link text-danger" (click)="removeHeaderRow($index)">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+      <button type="button" class="btn btn-sm btn-link mt-2" (click)="addHeaderRow()">
+        <i class="fas fa-plus me-1"></i> Add Header
+      </button>
+    </div>
+
+    <!-- AUTH TAB -->
+    <div class="tab-pane" [class.show]="activeTab() === 'auth'" [class.active]="activeTab() === 'auth'" formGroupName="auth">
+      <div class="d-flex justify-content-end mb-2">
+        <button type="button" class="btn btn-sm btn-outline-secondary" (click)="copyCurlToClipboard()" [disabled]="isCopying()">
+          <i class="fas fa-terminal me-1"></i> {{ isCopying() ? 'Copied!' : 'Copy cURL' }}
+        </button>
+      </div>
+      <div class="mb-3">
+        <label class="form-label fw-semibold mb-2">
+          <i class="fas fa-key me-1 text-info"></i> Auth Type
+        </label>
+        <select class="form-select mb-3" style="width: 200px;" formControlName="type">
+          <option value="none">None</option>
+          <option value="bearer">Bearer Token</option>
+          <option value="basic">Basic Auth</option>
+        </select>
+
+        @if (authType === 'bearer') {
+          <div>
+            <label class="form-label fw-semibold mb-2">Bearer Token</label>
+            <input type="text" class="form-control bearer-input" formControlName="bearerToken" placeholder="your-token-here">
+            <div class="form-text mt-2">
+              <small>Token will be sent as: <code>Authorization: Bearer &lt;token&gt;</code></small>
+            </div>
+          </div>
+        }
+
+        @if (authType === 'basic') {
+          <div>
+            <label class="form-label fw-semibold mb-2">Username</label>
+            <input type="text" class="form-control mb-2" formControlName="basicUsername" placeholder="username">
+            <label class="form-label fw-semibold mb-2">Password</label>
+            <input type="password" class="form-control" formControlName="basicPassword" placeholder="password">
+          </div>
+        }
       </div>
     </div>
-  </div>
 
-  <!-- Body Tab -->
-  <div class="tab-pane fade" id="body" role="tabpanel">
-    <label class="form-label fw-semibold mb-2">
-      <i class="fas fa-brackets-curly me-1 text-info"></i> JSON Body
-    </label>
-    <textarea class="form-control font-monospace json-textarea" rows="8" placeholder='{
-  "name": "John Doe",
-  "email": "john@example.com",
-  "role": "admin"
-}'>{
-  "name": "John Doe",
-  "email": "john@example.com",
-  "role": "admin"
-}</textarea>
+    <!-- BODY TAB -->
+    <div class="tab-pane" [class.show]="activeTab() === 'body'" [class.active]="activeTab() === 'body'" formGroupName="body">
+      <div class="d-flex justify-content-end mb-2">
+        <button type="button" class="btn btn-sm btn-outline-secondary" (click)="copyCurlToClipboard()" [disabled]="isCopying()">
+          <i class="fas fa-terminal me-1"></i> {{ isCopying() ? 'Copied!' : 'Copy cURL' }}
+        </button>
+      </div>
+      <div class="mb-3">
+        <label class="form-label fw-semibold mb-2">Content Type</label>
+        <select class="form-select mb-3" style="width: 200px;" formControlName="type">
+          <option value="none">None</option>
+          <option value="json">JSON</option>
+        </select>
+
+        @if (bodyType === 'json') {
+          <div>
+            <label class="form-label fw-semibold mb-2">
+              <i class="fas fa-code me-1 text-info"></i> JSON Body
+            </label>
+            <textarea class="form-control font-monospace json-textarea" rows="8" formControlName="jsonContent"></textarea>
+          </div>
+        }
+      </div>
+    </div>
+
   </div>
-</div>
+</form>
