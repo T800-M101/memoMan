@@ -1,6 +1,4 @@
-import { Component } from '@angular/core';
-import { Topbar } from '../topbar/topbar';
-import { Sidebar } from '../sidebar/sidebar';
+import { Component, signal } from '@angular/core';
 import { RequestBar } from '../request-bar/request-bar';
 import { RequestTabs } from '../request-tabs/request-tabs';
 import { ResponseSection } from '../response-section/response-section';
@@ -11,4 +9,10 @@ import { ResponseSection } from '../response-section/response-section';
   templateUrl: './workspace.html',
   styleUrl: './workspace.scss',
 })
-export class Workspace {}
+export class Workspace {
+  isTabsCollapsed = signal<boolean>(false);
+
+  toggleTabs() {
+    this.isTabsCollapsed.update((val) => !val);
+  }
+}

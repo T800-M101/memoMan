@@ -14,9 +14,57 @@
   width: 100%;
 }
 
+.btn-toggle-tabs {
+  background: #ffffff;
+  border: 1px solid #dee2e6;
+  color: #495057;
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  &:hover {
+    background: #f1f3f5;
+    color: #00bcd4;
+    border-color: #adb5bd;
+  }
+
+  i {
+    font-size: 0.7rem;
+  }
+}
+
+.justify-content-start {
+  display: flex;
+  justify-content: flex-start;
+}
+
 app-response-section {
   display: flex;
   flex-direction: column;
   flex: 1;
   min-height: 0;
+}
+
+.tabs-wrapper {
+  transition: all 0.3s ease;
+  overflow: hidden;
+  max-height: 1000px;
+
+  &.hidden {
+    max-height: 0;
+    opacity: 0;
+    margin: 0 !important;
+  }
+}
+
+app-response-section {
+  &.expanded {
+    flex: 2;
+  }
 }
