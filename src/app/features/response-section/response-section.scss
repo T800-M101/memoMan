@@ -118,3 +118,19 @@
     }
   }
 }
+
+.btn-outline-secondary {
+  border-radius: 8px;
+
+  &:hover:not(:disabled) {
+    background: #00bcd4;
+    border-color: #00bcd4;
+    color: white;
+    transform: translateY(-1px);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
