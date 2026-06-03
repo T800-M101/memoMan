@@ -11,5 +11,5 @@ import { Workspace } from './features/workspace/workspace';
   styleUrl: './app.scss',
 })
 export class App {
-  protected readonly title = signal('MemoMan API');
+  protected readonly title = signal('MemoMan Client');
 }
