@@ -22,6 +22,8 @@ export class RequestTabs implements OnInit, OnDestroy {
   private autoSaveInterval: any;
   private copyTimeout: any;
 
+  isJsonCopying = signal<boolean>(false);
+
   activeTab = signal<string>('params');
   isCopying = signal<boolean>(false);
 
@@ -213,6 +215,63 @@ export class RequestTabs implements OnInit, OnDestroy {
       this.copyTimeout = setTimeout(() => this.isCopying.set(false), 2000);
     } catch (err) {
       console.error('Clipboard API not available:', err);
+    }
+  }
+
+  formatJson() {
+  const raw = this.body.get('jsonContent')?.value;
+  try {
+    const parsed = JSON.parse(raw);
+    const pretty = JSON.stringify(parsed, null, 2);
+    this.body.get('jsonContent')?.setValue(pretty);
+  } catch {
+    // JSON inválido — el botón ya está disabled pero por si acaso
+  }
+}
+
+isValidJson(): boolean {
+  try {
+    JSON.parse(this.body.get('jsonContent')?.value ?? '');
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+  // ==================== JSON EDITOR ====================
+
+  jsonContent = signal<string>('');
+
+  jsonLineCount(): number {
+    const content = this.body.get('jsonContent')?.value ?? '';
+    return content ? content.split('\n').length : 0;
+  }
+
+  jsonCharCount(): number {
+    const content = this.body.get('jsonContent')?.value ?? '';
+    return content.length;
+  }
+
+  clearJson() {
+    this.body.get('jsonContent')?.setValue('');
+  }
+
+  // Copy JSON to clipboard with feedback
+  async copyJsonToClipboard(): Promise<void> {
+    const content = this.jsonContent();
+    if (!content) return;
+
+    try {
+      await navigator.clipboard.writeText(content);
+      this.isJsonCopying.set(true);
+
+      setTimeout(() => {
+        this.isJsonCopying.set(false);
+      }, 2000);
+
+      console.log('JSON copied to clipboard');
+    } catch (err) {
+      console.error('Failed to copy:', err);
     }
   }
 }

@@ -1,6 +1,6 @@
 <form [formGroup]="form">
 
-  <!-- TABS NAV sin cambios -->
+  <!-- TABS NAV -->
   <ul class="nav nav-tabs mb-3" id="requestTabs" role="tablist">
     <li class="nav-item">
       <button class="nav-link" [class.active]="activeTab() === 'params'" (click)="setActiveTab('params')" type="button">
@@ -126,26 +126,71 @@
       </div>
     </div>
 
-    <!-- BODY TAB -->
+    <!-- BODY TAB - CORREGIDO -->
     <div class="tab-pane" [class.show]="activeTab() === 'body'" [class.active]="activeTab() === 'body'" formGroupName="body">
       <div class="d-flex justify-content-end mb-2">
         <button type="button" class="btn btn-sm btn-outline-secondary" (click)="copyCurlToClipboard()" [disabled]="isCopying()">
           <i class="fas fa-terminal me-1"></i> {{ isCopying() ? 'Copied!' : 'Copy cURL' }}
         </button>
       </div>
+
       <div class="mb-3">
-        <label class="form-label fw-semibold mb-2">Content Type</label>
-        <select class="form-select mb-3" style="width: 200px;" formControlName="type">
+        <label class="form-label fw-semibold mb-2">
+          <i class="fas fa-file-code me-1 text-info"></i> Content Type
+        </label>
+        <select class="form-select content-type-select mb-3" formControlName="type">
           <option value="none">None</option>
           <option value="json">JSON</option>
         </select>
 
         @if (bodyType === 'json') {
-          <div>
-            <label class="form-label fw-semibold mb-2">
-              <i class="fas fa-code me-1 text-info"></i> JSON Body
-            </label>
-            <textarea class="form-control font-monospace json-textarea" rows="8" formControlName="jsonContent"></textarea>
+          <div class="json-editor-panel">
+            <!-- Toolbar -->
+            <div class="json-editor-toolbar">
+              <div class="d-flex align-items-center gap-2">
+                <i class="fas fa-code text-info"></i>
+                <span class="fw-semibold">JSON Editor</span>
+              </div>
+              <div class="d-flex align-items-center gap-1">
+                <button type="button" class="btn btn-sm json-toolbar-btn" (click)="formatJson()" title="Format JSON">
+                  <i class="fas fa-magic me-1"></i> Format
+                </button>
+                <button type="button" class="btn btn-sm json-toolbar-btn" (click)="copyJsonToClipboard()" title="Copy to clipboard">
+                  <i class="fas fa-copy me-1"></i> Copy
+                </button>
+                <button type="button" class="btn btn-sm json-toolbar-btn" (click)="clearJson()" title="Clear editor">
+                  <i class="fas fa-eraser me-1"></i> Clear
+                </button>
+              </div>
+            </div>
+
+            <!-- Editor Area -->
+            <div class="json-editor-area">
+              <textarea class="json-textarea"
+                        rows="12"
+                        formControlName="jsonContent"
+                        placeholder='{"key": "value"}'
+                        spellcheck="false"></textarea>
+            </div>
+
+            <!-- Status Bar -->
+            <div class="json-editor-status">
+              <div class="d-flex align-items-center gap-2">
+                <span class="status-badge" [class.status-valid]="isValidJson() && jsonContent().length > 0"
+                                          [class.status-invalid]="!isValidJson() && jsonContent().length > 0"
+                                          [class.status-empty]="jsonContent().length === 0">
+                  <i class="fas fa-circle me-1"></i>
+                  @if (jsonContent().length === 0) { Empty }
+                  @else if (isValidJson()) { Valid JSON }
+                  @else { Invalid JSON }
+                </span>
+              </div>
+              <div class="d-flex align-items-center gap-1 text-muted small">
+                <span>{{ jsonLineCount() }} lines</span>
+                <span>·</span>
+                <span>{{ jsonCharCount() }} chars</span>
+              </div>
+            </div>
           </div>
         }
       </div>
