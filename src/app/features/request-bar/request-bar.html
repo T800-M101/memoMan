@@ -1,0 +1,31 @@
+<div class="row g-3 mb-4">
+  <div class="col-auto">
+    <select class="form-select method-select" formControlName="method">
+      <option value="GET" selected>GET</option>
+      <option value="POST">POST</option>
+      <option value="PUT">PUT</option>
+      <option value="DELETE">DELETE</option>
+    </select>
+  </div>
+
+  <div class="col">
+    <div class="floating-label-group">
+      <input type="text"
+             class="form-control url-input"
+             id="urlInput"
+             formControlName="url"
+             (focus)="onInputFocus()"
+             (blur)="onInputBlur()"
+             [placeholder]="isUrlFocused() ? 'https://api.example.com/users' : 'Request URL'">
+      <label for="urlInput" class="floating-label" [class.active]="isUrlFocused() || url?.value">
+        Request URL
+      </label>
+    </div>
+  </div>
+
+  <div class="col-auto">
+    <button class="btn send-btn px-4" (click)="sendRequest()">
+      <i class="fas fa-paper-plane me-2"></i> Send
+    </button>
+  </div>
+</div>

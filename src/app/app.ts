@@ -1,8 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { Component, signal } from '@angular/core';
-import { Topbar } from './components/topbar/topbar';
-import { Sidebar } from './components/sidebar/sidebar';
-import { Workspace } from './components/workspace/workspace';
+import { Topbar } from './features/topbar/topbar';
+import { Sidebar } from './features/sidebar/sidebar';
+import { Workspace } from './features/workspace/workspace';
 
 @Component({
   selector: 'app-root',
