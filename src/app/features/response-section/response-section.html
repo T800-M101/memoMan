@@ -9,37 +9,11 @@
       <i class="fas fa-save me-1"></i> Save Response
     </button>
   </div>
-  <div class="response-body">
-    <div class="response-json">
-      &lcub;
-        "status": "success",
-        "data": &lcub;
-          "users": [
-            &lcub;
-              "id": 1,
-              "name": "John Doe",
-              "email": "john@example.com",
-              "createdAt": "2024-01-15T10:30:00Z"
-            &rcub;,
-            &lcub;
-              "id": 2,
-              "name": "Jane Smith",
-              "email": "jane@example.com",
-              "createdAt": "2024-01-16T14:20:00Z"
-            &rcub;,
-            &lcub;
-              "id": 3,
-              "name": "Bob Johnson",
-              "email": "bob@example.com",
-              "createdAt": "2024-01-17T09:45:00Z"
-            &rcub;
-          ],
-          "total": 3,
-          "page": 1,
-          "limit": 10
-        &rcub;,
-        "message": "Users retrieved successfully"
-      &rcub;
+<div class="response-body">
+      @if(response()) {
+        <ngx-json-viewer [json]="response()"></ngx-json-viewer>
+      } @else {
+        <div class="text-muted text-center py-5">No response yet</div>
+      }
     </div>
-  </div>
 </div>

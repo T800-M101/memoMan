@@ -1,4 +1,22 @@
+:host {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
 .workspace {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  padding: 24px;
   overflow-y: auto;
-  background: #f8f9fa;
+  width: 100%;
+}
+
+app-response-section {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
 }

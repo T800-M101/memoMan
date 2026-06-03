@@ -40,3 +40,67 @@
   line-height: 1.6;
   white-space: pre-wrap;
 }
+
+:host ::ng-deep {
+  ngx-json-viewer {
+    font-family: 'Fira Code', 'Courier New', monospace;
+    font-size: 13px;
+    
+    .segment-key {
+      color: #9cdcfe !important;
+      font-weight: 500;
+    }
+
+    .segment-value {
+      color: #ce9178 !important;
+    }
+
+    .segment-number {
+      color: #b5cea8 !important;
+    }
+
+    .segment-boolean {
+      color: #569cd6 !important;
+    }
+
+    .segment-null {
+      color: #569cd6 !important;
+    }
+
+    .segment-string {
+      color: #ce9178 !important;
+    }
+
+    .segment-separator {
+      color: #d4d4d4 !important;
+    }
+
+    .segment-bracket {
+      color: #d4d4d4 !important;
+    }
+
+    .segment-expander {
+      color: #808080 !important;
+      font-size: 12px;
+
+      &:hover {
+        color: #d4d4d4 !important;
+      }
+    }
+
+    .segment-key-value {
+      &:hover {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 4px;
+      }
+    }
+
+    .segment-index {
+      color: #808080 !important;
+    }
+
+    .segment-quote {
+      color: #808080 !important;
+    }
+  }
+}
