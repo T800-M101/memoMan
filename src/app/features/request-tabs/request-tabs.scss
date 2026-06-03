@@ -260,3 +260,17 @@
     box-shadow: 0 0 0 0.2rem rgba(0, 188, 212, 0.25);
   }
 }
+
+.json-invalid {
+  border: 1px solid #dc3545 !important;
+
+  .json-textarea {
+    color: #dc3545 !important;
+  }
+}
+
+.json-editor-status {
+  .text-danger {
+    color: #ff6b6b !important;
+  }
+}

@@ -258,20 +258,18 @@ isValidJson(): boolean {
 
   // Copy JSON to clipboard with feedback
   async copyJsonToClipboard(): Promise<void> {
-    const content = this.jsonContent();
-    if (!content) return;
+  const content = this.body.get('jsonContent')?.value;
+  if (!content) return;
 
-    try {
-      await navigator.clipboard.writeText(content);
-      this.isJsonCopying.set(true);
+  try {
+    await navigator.clipboard.writeText(content);
+    this.isJsonCopying.set(true);
 
-      setTimeout(() => {
-        this.isJsonCopying.set(false);
-      }, 2000);
-
-      console.log('JSON copied to clipboard');
-    } catch (err) {
-      console.error('Failed to copy:', err);
-    }
+    setTimeout(() => {
+      this.isJsonCopying.set(false); 
+    }, 2000);
+  } catch (err) {
+    console.error('Failed to copy:', err);
   }
+}
 }

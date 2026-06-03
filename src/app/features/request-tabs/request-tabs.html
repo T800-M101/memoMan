@@ -8,7 +8,8 @@
       </button>
     </li>
     <li class="nav-item">
-      <button class="nav-link" [class.active]="activeTab() === 'headers'" (click)="setActiveTab('headers')" type="button">
+      <button class="nav-link" [class.active]="activeTab() === 'headers'" (click)="setActiveTab('headers')"
+        type="button">
         <i class="fas fa-heading me-1"></i> Headers
       </button>
     </li>
@@ -29,26 +30,32 @@
     <!-- PARAMS TAB -->
     <div class="tab-pane" [class.show]="activeTab() === 'params'" [class.active]="activeTab() === 'params'">
       <div class="d-flex justify-content-end mb-2">
-        <button type="button" class="btn btn-sm btn-outline-secondary" (click)="copyCurlToClipboard()" [disabled]="isCopying()">
+        <button type="button" class="btn btn-sm btn-outline-secondary" (click)="copyCurlToClipboard()"
+          [disabled]="isCopying()">
           <i class="fas fa-terminal me-1"></i> {{ isCopying() ? 'Copied!' : 'Copy cURL' }}
         </button>
       </div>
       <table class="table params-table mb-0">
         <thead>
-          <tr><th>KEY</th><th>VALUE</th><th>DESCRIPTION</th><th style="width: 40px"></th></tr>
+          <tr>
+            <th>KEY</th>
+            <th>VALUE</th>
+            <th>DESCRIPTION</th>
+            <th style="width: 40px"></th>
+          </tr>
         </thead>
         <tbody formArrayName="params">
           @for (param of params.controls; track $index) {
-            <tr [formGroupName]="$index">
-              <td><input type="text" formControlName="key" placeholder="Key"></td>
-              <td><input type="text" formControlName="value" placeholder="Value"></td>
-              <td><input type="text" formControlName="description" placeholder="Description"></td>
-              <td>
-                <button type="button" class="btn btn-sm btn-link text-danger" (click)="removeParamRow($index)">
-                  <i class="fas fa-trash"></i>
-                </button>
-              </td>
-            </tr>
+          <tr [formGroupName]="$index">
+            <td><input type="text" formControlName="key" placeholder="Key"></td>
+            <td><input type="text" formControlName="value" placeholder="Value"></td>
+            <td><input type="text" formControlName="description" placeholder="Description"></td>
+            <td>
+              <button type="button" class="btn btn-sm btn-link text-danger" (click)="removeParamRow($index)">
+                <i class="fas fa-trash"></i>
+              </button>
+            </td>
+          </tr>
           }
         </tbody>
       </table>
@@ -60,26 +67,32 @@
     <!-- HEADERS TAB -->
     <div class="tab-pane" [class.show]="activeTab() === 'headers'" [class.active]="activeTab() === 'headers'">
       <div class="d-flex justify-content-end mb-2">
-        <button type="button" class="btn btn-sm btn-outline-secondary" (click)="copyCurlToClipboard()" [disabled]="isCopying()">
+        <button type="button" class="btn btn-sm btn-outline-secondary" (click)="copyCurlToClipboard()"
+          [disabled]="isCopying()">
           <i class="fas fa-terminal me-1"></i> {{ isCopying() ? 'Copied!' : 'Copy cURL' }}
         </button>
       </div>
       <table class="table params-table mb-0">
         <thead>
-          <tr><th>KEY</th><th>VALUE</th><th>DESCRIPTION</th><th style="width: 40px"></th></tr>
+          <tr>
+            <th>KEY</th>
+            <th>VALUE</th>
+            <th>DESCRIPTION</th>
+            <th style="width: 40px"></th>
+          </tr>
         </thead>
         <tbody formArrayName="headers">
           @for (header of headers.controls; track $index) {
-            <tr [formGroupName]="$index">
-              <td><input type="text" formControlName="key" placeholder="Key"></td>
-              <td><input type="text" formControlName="value" placeholder="Value"></td>
-              <td><input type="text" formControlName="description" placeholder="Description"></td>
-              <td>
-                <button type="button" class="btn btn-sm btn-link text-danger" (click)="removeHeaderRow($index)">
-                  <i class="fas fa-trash"></i>
-                </button>
-              </td>
-            </tr>
+          <tr [formGroupName]="$index">
+            <td><input type="text" formControlName="key" placeholder="Key"></td>
+            <td><input type="text" formControlName="value" placeholder="Value"></td>
+            <td><input type="text" formControlName="description" placeholder="Description"></td>
+            <td>
+              <button type="button" class="btn btn-sm btn-link text-danger" (click)="removeHeaderRow($index)">
+                <i class="fas fa-trash"></i>
+              </button>
+            </td>
+          </tr>
           }
         </tbody>
       </table>
@@ -89,9 +102,11 @@
     </div>
 
     <!-- AUTH TAB -->
-    <div class="tab-pane" [class.show]="activeTab() === 'auth'" [class.active]="activeTab() === 'auth'" formGroupName="auth">
+    <div class="tab-pane" [class.show]="activeTab() === 'auth'" [class.active]="activeTab() === 'auth'"
+      formGroupName="auth">
       <div class="d-flex justify-content-end mb-2">
-        <button type="button" class="btn btn-sm btn-outline-secondary" (click)="copyCurlToClipboard()" [disabled]="isCopying()">
+        <button type="button" class="btn btn-sm btn-outline-secondary" (click)="copyCurlToClipboard()"
+          [disabled]="isCopying()">
           <i class="fas fa-terminal me-1"></i> {{ isCopying() ? 'Copied!' : 'Copy cURL' }}
         </button>
       </div>
@@ -106,30 +121,33 @@
         </select>
 
         @if (authType === 'bearer') {
-          <div>
-            <label class="form-label fw-semibold mb-2">Bearer Token</label>
-            <input type="text" class="form-control bearer-input" formControlName="bearerToken" placeholder="your-token-here">
-            <div class="form-text mt-2">
-              <small>Token will be sent as: <code>Authorization: Bearer &lt;token&gt;</code></small>
-            </div>
+        <div>
+          <label class="form-label fw-semibold mb-2">Bearer Token</label>
+          <input type="text" class="form-control bearer-input" formControlName="bearerToken"
+            placeholder="your-token-here">
+          <div class="form-text mt-2">
+            <small>Token will be sent as: <code>Authorization: Bearer &lt;token&gt;</code></small>
           </div>
+        </div>
         }
 
         @if (authType === 'basic') {
-          <div>
-            <label class="form-label fw-semibold mb-2">Username</label>
-            <input type="text" class="form-control mb-2" formControlName="basicUsername" placeholder="username">
-            <label class="form-label fw-semibold mb-2">Password</label>
-            <input type="password" class="form-control" formControlName="basicPassword" placeholder="password">
-          </div>
+        <div>
+          <label class="form-label fw-semibold mb-2">Username</label>
+          <input type="text" class="form-control mb-2" formControlName="basicUsername" placeholder="username">
+          <label class="form-label fw-semibold mb-2">Password</label>
+          <input type="password" class="form-control" formControlName="basicPassword" placeholder="password">
+        </div>
         }
       </div>
     </div>
 
-    <!-- BODY TAB - CORREGIDO -->
-    <div class="tab-pane" [class.show]="activeTab() === 'body'" [class.active]="activeTab() === 'body'" formGroupName="body">
+    <!-- BODY TAB -->
+    <div class="tab-pane" [class.show]="activeTab() === 'body'" [class.active]="activeTab() === 'body'"
+      formGroupName="body">
       <div class="d-flex justify-content-end mb-2">
-        <button type="button" class="btn btn-sm btn-outline-secondary" (click)="copyCurlToClipboard()" [disabled]="isCopying()">
+        <button type="button" class="btn btn-sm btn-outline-secondary" (click)="copyCurlToClipboard()"
+          [disabled]="isCopying()">
           <i class="fas fa-terminal me-1"></i> {{ isCopying() ? 'Copied!' : 'Copy cURL' }}
         </button>
       </div>
@@ -144,54 +162,50 @@
         </select>
 
         @if (bodyType === 'json') {
-          <div class="json-editor-panel">
-            <!-- Toolbar -->
-            <div class="json-editor-toolbar">
-              <div class="d-flex align-items-center gap-2">
-                <i class="fas fa-code text-info"></i>
-                <span class="fw-semibold">JSON Editor</span>
-              </div>
-              <div class="d-flex align-items-center gap-1">
-                <button type="button" class="btn btn-sm json-toolbar-btn" (click)="formatJson()" title="Format JSON">
-                  <i class="fas fa-magic me-1"></i> Format
-                </button>
-                <button type="button" class="btn btn-sm json-toolbar-btn" (click)="copyJsonToClipboard()" title="Copy to clipboard">
-                  <i class="fas fa-copy me-1"></i> Copy
-                </button>
-                <button type="button" class="btn btn-sm json-toolbar-btn" (click)="clearJson()" title="Clear editor">
-                  <i class="fas fa-eraser me-1"></i> Clear
-                </button>
-              </div>
+        <div class="json-editor-panel">
+          <!-- Toolbar -->
+          <div class="json-editor-toolbar">
+            <div class="d-flex align-items-center gap-2">
+              <i class="fas fa-code text-info"></i>
+              <span class="fw-semibold">JSON Editor</span>
             </div>
-
-            <!-- Editor Area -->
-            <div class="json-editor-area">
-              <textarea class="json-textarea"
-                        rows="12"
-                        formControlName="jsonContent"
-                        placeholder='{"key": "value"}'
-                        spellcheck="false"></textarea>
-            </div>
-
-            <!-- Status Bar -->
-            <div class="json-editor-status">
-              <div class="d-flex align-items-center gap-2">
-                <span class="status-badge" [class.status-valid]="isValidJson() && jsonContent().length > 0"
-                                          [class.status-invalid]="!isValidJson() && jsonContent().length > 0"
-                                          [class.status-empty]="jsonContent().length === 0">
-                  <i class="fas fa-circle me-1"></i>
-                  @if (jsonContent().length === 0) { Empty }
-                  @else if (isValidJson()) { Valid JSON }
-                  @else { Invalid JSON }
-                </span>
-              </div>
-              <div class="d-flex align-items-center gap-1 text-muted small">
-                <span>{{ jsonLineCount() }} lines</span>
-                <span>·</span>
-                <span>{{ jsonCharCount() }} chars</span>
-              </div>
+            <div class="d-flex align-items-center gap-1">
+              <button type="button" class="btn btn-sm json-toolbar-btn" (click)="formatJson()" title="Format JSON">
+                <i class="fas fa-magic me-1"></i> Format
+              </button>
+              <button type="button" class="btn btn-sm json-toolbar-btn" (click)="copyJsonToClipboard()"
+                title="Copy to clipboard">
+                <i class="fas" [class.fa-copy]="!isJsonCopying()" [class.fa-check]="isJsonCopying()"></i>
+                {{ isJsonCopying() ? 'Copied!' : 'Copy' }}
+              </button>
+              <button type="button" class="btn btn-sm json-toolbar-btn" (click)="clearJson()" title="Clear editor">
+                <i class="fas fa-eraser me-1"></i> Clear
+              </button>
             </div>
           </div>
+
+          <!-- Editor Area -->
+          <div class="json-editor-area" [class.json-invalid]="!isValidJson()">
+            <textarea class="json-textarea" [class.text-danger]="!isValidJson()" rows="12" formControlName="jsonContent"
+              placeholder='{"key": "value"}' spellcheck="false">
+            </textarea>
+          </div>
+
+          <!-- Status Bar -->
+          <div class="json-editor-status">
+            @if (isValidJson()) {
+            <div class="d-flex align-items-center gap-2 text-muted small">
+              <span>{{ jsonLineCount() }} lines</span>
+              <span>·</span>
+              <span>{{ jsonCharCount() }} chars</span>
+            </div>
+            } @else {
+            <div class="text-danger small fw-bold">
+              <i class="fas fa-exclamation-circle me-1"></i> Invalid JSON object
+            </div>
+            }
+          </div>
+        </div>
         }
       </div>
     </div>
