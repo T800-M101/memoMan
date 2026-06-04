@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, effect, computed } from '@angular/core';
 import {
   ReactiveFormsModule,
   FormBuilder,
@@ -7,6 +7,7 @@ import {
 } from '@angular/forms';
 import { signal } from '@angular/core';
 import { inject } from '@angular/core';
+import { RequestService } from '../../core/services/request-service';
 
 @Component({
   selector: 'app-request-tabs',
@@ -16,6 +17,10 @@ import { inject } from '@angular/core';
   styleUrls: ['./request-tabs.scss'],
 })
 export class RequestTabs implements OnInit, OnDestroy {
+
+
+  private requestService = inject(RequestService);
+
   private fb = inject(FormBuilder);
 
   private readonly STORAGE_KEY = 'memoman_request_config';
@@ -70,6 +75,23 @@ export class RequestTabs implements OnInit, OnDestroy {
 
   get bodyType(): string {
     return this.body.get('type')?.value;
+  }
+
+  constructor(){
+    effect(() => {
+      if (this.requestService.sendRequested() > 0) {
+        this.executeRequest();
+      }
+    });
+  }
+
+  executeRequest() {
+    const method = this.requestService.method();
+    const url = this.requestService.url();
+
+    // Generamos el cURL con los datos del form actual + los datos del servicio
+    const curl = this.generateCurlCommand(method, url);
+    console.log('Ejecutando con cURL:', curl);
   }
 
   // ==================== LIFECYCLE ====================
@@ -179,38 +201,41 @@ export class RequestTabs implements OnInit, OnDestroy {
 
   // ==================== cURL ====================
 
-  generateCurlCommand(): string {
-    const method = 'GET';
-    const url = 'https://api.example.com/users';
-    const { params, headers, auth, body } = this.form.value;
+generateCurlCommand(method: string, url: string): string {
+  const { params, headers, auth, body } = this.form.value;
 
-    const validParams = params.filter((p: any) => p.key?.trim());
-    let curl = validParams.length
-      ? `curl -X ${method} '${url}?${validParams.map((p: any) => `${encodeURIComponent(p.key)}=${encodeURIComponent(p.value)}`).join('&')}'`
-      : `curl -X ${method} '${url}'`;
+  const validParams = params.filter((p: any) => p.key?.trim());
 
-    headers
-      .filter((h: any) => h.key?.trim())
-      .forEach((h: any) => {
-        curl += ` \\\n  -H '${h.key}: ${h.value}'`;
-      });
+  let curl = validParams.length
+    ? `curl -X ${method} '${url}?${validParams.map((p: any) => `${encodeURIComponent(p.key)}=${encodeURIComponent(p.value)}`).join('&')}'`
+    : `curl -X ${method} '${url}'`;
 
-    if (auth.type === 'bearer' && auth.bearerToken) {
-      curl += ` \\\n  -H 'Authorization: Bearer ${auth.bearerToken}'`;
-    } else if (auth.type === 'basic' && auth.basicUsername) {
-      curl += ` \\\n  -u '${auth.basicUsername}:${auth.basicPassword}'`;
-    }
+  headers
+    .filter((h: any) => h.key?.trim())
+    .forEach((h: any) => {
+      curl += ` \\\n  -H '${h.key}: ${h.value}'`;
+    });
 
-    if (body.type === 'json' && body.jsonContent) {
-      curl += ` \\\n  -H 'Content-Type: application/json' \\\n  -d '${body.jsonContent.replace(/'/g, "'\\''")}'`;
-    }
-
-    return curl;
+  if (auth.type === 'bearer' && auth.bearerToken) {
+    curl += ` \\\n  -H 'Authorization: Bearer ${auth.bearerToken}'`;
+  } else if (auth.type === 'basic' && auth.basicUsername) {
+    curl += ` \\\n  -u '${auth.basicUsername}:${auth.basicPassword}'`;
   }
 
+  if (body.type === 'json' && body.jsonContent) {
+    curl += ` \\\n  -H 'Content-Type: application/json' \\\n  -d '${body.jsonContent.replace(/'/g, "'\\''")}'`;
+  }
+
+  return curl;
+}
+
   async copyCurlToClipboard() {
+    if (this.requestService.isUrlInvalid()) {
+    console.warn("URL inválida, abortando copiado.");
+    return;
+  }
     try {
-      await navigator.clipboard.writeText(this.generateCurlCommand());
+      await navigator.clipboard.writeText(this.generateCurlCommand(this.requestService.method(), this.requestService.url()));
       this.isCopying.set(true);
       this.copyTimeout = setTimeout(() => this.isCopying.set(false), 2000);
     } catch (err) {
@@ -225,7 +250,7 @@ export class RequestTabs implements OnInit, OnDestroy {
     const pretty = JSON.stringify(parsed, null, 2);
     this.body.get('jsonContent')?.setValue(pretty);
   } catch {
-    // JSON inválido — el botón ya está disabled pero por si acaso
+    // Invalid JSON — the button is already disabled but just in case
   }
 }
 
@@ -266,7 +291,7 @@ isValidJson(): boolean {
     this.isJsonCopying.set(true);
 
     setTimeout(() => {
-      this.isJsonCopying.set(false); 
+      this.isJsonCopying.set(false);
     }, 2000);
   } catch (err) {
     console.error('Failed to copy:', err);

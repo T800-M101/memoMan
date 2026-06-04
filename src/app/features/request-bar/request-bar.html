@@ -14,9 +14,11 @@
              class="form-control url-input"
              id="urlInput"
              formControlName="url"
+             (input)="requestService.updateUrl($event.target.value || '')"
              (focus)="onInputFocus()"
              (blur)="onInputBlur()"
-             [placeholder]="isUrlFocused() ? 'https://api.example.com/users' : 'Request URL'">
+             [placeholder]="isUrlFocused() ? 'https://api.example.com/users' : 'Request URL'"
+             [class.border-danger]="requestService.isUrlInvalid() && isTouched">
       <label for="urlInput" class="floating-label" [class.active]="isUrlFocused() || url?.value">
         Request URL
       </label>

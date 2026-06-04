@@ -41,6 +41,10 @@
     box-shadow: 0 0 0 0.2rem rgba(0, 188, 212, 0.25);
     outline: none;
   }
+
+  &.border-danger {
+    border: 1px solid #dc3545 !important;
+  }
 }
 
 .floating-label {
