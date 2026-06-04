@@ -1,29 +1,58 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { RequestService } from '../../core/services/request-service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-request-bar',
-  imports: [],
+  imports: [ReactiveFormsModule],
   templateUrl: './request-bar.html',
   styleUrl: './request-bar.scss',
 })
-export class RequestBar  {
-
-requestService = inject(RequestService);
-isTouched = false;
-
-requestForm: FormGroup;
-  isUrlFocused = signal<boolean>(false);
+export class RequestBar implements OnInit {
   private defaultUrl = 'https://api.example.com/users';
+  private fb = inject(FormBuilder);
 
-  constructor(private fb: FormBuilder) {
-    this.requestForm = this.fb.group({
-      method: ['GET'],
-      url: ['']
-    });
+  private destroyRef = inject(DestroyRef);
+
+  requestService = inject(RequestService);
+  isTouched = false;
+  isUrlFocused = signal<boolean>(false);
+
+  requestForm = this.fb.group({
+    method: ['GET'],
+    url: [''],
+  });
+
+  ngOnInit() {
+    this.method
+      ?.valueChanges
+      .pipe(
+        takeUntilDestroyed(
+          this.destroyRef
+        )
+      )
+      .subscribe(method => {
+
+        if (!method) return;
+
+        this.requestService
+          .updateMethod(method);
+      });
+
+    this.url
+      ?.valueChanges
+      .pipe(
+        takeUntilDestroyed(
+          this.destroyRef
+        )
+      )
+      .subscribe(url => {
+
+        this.requestService
+          .updateUrl(url || '');
+      });
   }
-
 
   onInputFocus() {
     this.isUrlFocused.set(true);
@@ -36,11 +65,6 @@ requestForm: FormGroup;
   onInputBlur() {
     this.isUrlFocused.set(false);
     this.isTouched = true;
-    this.isUrlFocused.set(false);
-    const currentUrl = this.requestForm.get('url')?.value;
-    if (currentUrl === this.defaultUrl) {
-      this.requestForm.patchValue({ url: '' });
-    }
   }
 
   sendRequest() {
@@ -55,9 +79,5 @@ requestForm: FormGroup;
 
   get url() {
     return this.requestForm.get('url');
-  }
-
-  onUrlChange(newUrl: string) {
-    this.requestService.updateUrl(newUrl);
   }
 }
