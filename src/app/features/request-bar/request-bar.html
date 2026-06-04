@@ -3,22 +3,9 @@
   <div class="col-auto">
 
     <select class="form-select method-select" formControlName="method">
-      <option value="GET">
-        GET
-      </option>
-
-      <option value="POST">
-        POST
-      </option>
-
-      <option value="PUT">
-        PUT
-      </option>
-
-      <option value="DELETE">
-        DELETE
-      </option>
-
+      <option value="GET">GET</option>
+      <option value="POST">POST</option><option value="PUT">PUT</option>
+      <option value="DELETE">DELETE</option>
     </select>
 
   </div>
@@ -26,11 +13,15 @@
   <div class="col">
     <div class="floating-label-group">
 
-      <input type="text" class="form-control url-input" id="urlInput" formControlName="url"
-        (input)="requestService.updateUrl($any($event.target).value || '')"
+      <input
+        type="text"
+        class="form-control url-input"
+        id="urlInput"
+        formControlName="url"
+        (focus)="onInputFocus()"
         (blur)="onInputBlur()"
-        [placeholder]="isUrlFocused() ? 'https://api.example.com/users' : 'Request URL'"
-        [class.border-danger]="requestService.isUrlInvalid() && isTouched" />
+        [placeholder]="isUrlFocused() && !url?.value ? 'https://api.example.com/users' : '' "
+        [class.border-danger]="requestService.isUrlInvalid()  && isTouched"/>
 
       <label
         for="urlInput"

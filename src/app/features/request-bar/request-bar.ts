@@ -10,7 +10,6 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
   styleUrl: './request-bar.scss',
 })
 export class RequestBar implements OnInit {
-  private defaultUrl = 'https://api.example.com/users';
   private fb = inject(FormBuilder);
 
   private destroyRef = inject(DestroyRef);
@@ -25,46 +24,24 @@ export class RequestBar implements OnInit {
   });
 
   ngOnInit() {
-    this.method
-      ?.valueChanges
-      .pipe(
-        takeUntilDestroyed(
-          this.destroyRef
-        )
-      )
-      .subscribe(method => {
+    this.method?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((method) => {
+      if (!method) return;
 
-        if (!method) return;
+      this.requestService.updateMethod(method);
+    });
 
-        this.requestService
-          .updateMethod(method);
-      });
-
-    this.url
-      ?.valueChanges
-      .pipe(
-        takeUntilDestroyed(
-          this.destroyRef
-        )
-      )
-      .subscribe(url => {
-
-        this.requestService
-          .updateUrl(url || '');
-      });
+    this.url?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((url) => {
+      this.requestService.updateUrl(url || '');
+    });
   }
 
   onInputFocus() {
     this.isUrlFocused.set(true);
-    const currentUrl = this.requestForm.get('url')?.value;
-    if (!currentUrl) {
-      this.requestForm.patchValue({ url: this.defaultUrl });
-    }
   }
 
   onInputBlur() {
-    this.isUrlFocused.set(false);
     this.isTouched = true;
+    this.isUrlFocused.set(false);
   }
 
   sendRequest() {
