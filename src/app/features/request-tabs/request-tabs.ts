@@ -1,57 +1,65 @@
-import { Component, OnInit, OnDestroy, effect, computed } from '@angular/core';
-import {
-  ReactiveFormsModule,
-  FormBuilder,
-  FormGroup,
-  FormArray,
-} from '@angular/forms';
-import { signal } from '@angular/core';
-import { inject } from '@angular/core';
+import { Component, computed, DestroyRef, effect, inject, signal } from '@angular/core';
+import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { NgTemplateOutlet } from '@angular/common';
 import { RequestService } from '../../core/services/request-service';
 
 @Component({
   selector: 'app-request-tabs',
   standalone: true,
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, NgTemplateOutlet],
   templateUrl: './request-tabs.html',
   styleUrls: ['./request-tabs.scss'],
 })
-export class RequestTabs implements OnInit, OnDestroy {
-
-
-  private requestService = inject(RequestService);
-
-  private fb = inject(FormBuilder);
-
+export class RequestTabs {
   private readonly STORAGE_KEY = 'memoman_request_config';
-  private autoSaveInterval: any;
-  private copyTimeout: any;
-
-  isJsonCopying = signal<boolean>(false);
+  private fb = inject(FormBuilder);
+  private requestService = inject(RequestService);
+  private destroyRef = inject(DestroyRef);
 
   activeTab = signal<string>('params');
   isCopying = signal<boolean>(false);
-
-  // ==================== REACTIVE FORM ====================
+  isJsonCopying = signal<boolean>(false);
 
   form: FormGroup = this.fb.group({
     params: this.fb.array([]),
+
     headers: this.fb.array([]),
+
     auth: this.fb.group({
       type: ['bearer'],
       bearerToken: [''],
       basicUsername: [''],
       basicPassword: [''],
     }),
+
     body: this.fb.group({
       type: ['json'],
-      jsonContent: [
-        `{\n  "name": "John Doe",\n  "email": "john@example.com",\n  "role": "admin"\n}`,
-      ],
+      jsonContent: [''],
     }),
   });
 
-  // ==================== GETTERS ====================
+  authType = computed(() => this.auth.get('type')?.value);
+
+  bodyType = computed(() => this.body.get('type')?.value);
+
+  constructor() {
+    this.loadFromLocalStorage();
+
+    this.form.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      this.saveToLocalStorage();
+    });
+
+    effect(() => {
+      if (this.requestService.sendRequested() > 0) {
+        this.executeRequest();
+      }
+    });
+  }
+
+  // ====================
+  // GETTERS
+  // ====================
 
   get params(): FormArray {
     return this.form.get('params') as FormArray;
@@ -69,232 +77,229 @@ export class RequestTabs implements OnInit, OnDestroy {
     return this.form.get('body') as FormGroup;
   }
 
-  get authType(): string {
-    return this.auth.get('type')?.value;
-  }
-
-  get bodyType(): string {
-    return this.body.get('type')?.value;
-  }
-
-  constructor(){
-    effect(() => {
-      if (this.requestService.sendRequested() > 0) {
-        this.executeRequest();
-      }
-    });
-  }
-
-  executeRequest() {
-    const method = this.requestService.method();
-    const url = this.requestService.url();
-
-    // Generamos el cURL con los datos del form actual + los datos del servicio
-    const curl = this.generateCurlCommand(method, url);
-    console.log('Ejecutando con cURL:', curl);
-  }
-
-  // ==================== LIFECYCLE ====================
-
-  ngOnInit() {
-    this.loadFromLocalStorage();
-    this.setupAutoSave();
-  }
-
-  ngOnDestroy() {
-    if (this.autoSaveInterval) clearInterval(this.autoSaveInterval);
-    if (this.copyTimeout) clearTimeout(this.copyTimeout);
-  }
-
-  // ==================== FORM ARRAY HELPERS ====================
-
-  private createParamRow(key = '', value = '', description = ''): FormGroup {
-    return this.fb.group({ key: [key], value: [value], description: [description] });
-  }
-
-  addParamRow() {
-    this.params.push(this.createParamRow());
-    this.saveToLocalStorage();
-  }
-
-  removeParamRow(index: number) {
-    this.params.removeAt(index);
-    this.saveToLocalStorage();
-  }
-
-  private createHeaderRow(key = '', value = '', description = ''): FormGroup {
-    return this.fb.group({ key: [key], value: [value], description: [description] });
-  }
-
-  addHeaderRow() {
-    this.headers.push(this.createHeaderRow());
-    this.saveToLocalStorage();
-  }
-
-  removeHeaderRow(index: number) {
-    this.headers.removeAt(index);
-    this.saveToLocalStorage();
-  }
-
-  // ==================== UI ====================
+  // ====================
+  // UI
+  // ====================
 
   setActiveTab(tab: string) {
     this.activeTab.set(tab);
   }
 
-  // ==================== PERSISTENCE ====================
+  // ====================
+  // FORM HELPERS
+  // ====================
+
+  private createKeyValueRow(key = '', value = '', description = ''): FormGroup {
+    return this.fb.group({
+      key: [key],
+      value: [value],
+      description: [description],
+    });
+  }
+
+  addParamRow() {
+    this.params.push(this.createKeyValueRow());
+  }
+
+  removeParamRow(index: number) {
+    this.params.removeAt(index);
+  }
+
+  addHeaderRow() {
+    this.headers.push(this.createKeyValueRow());
+  }
+
+  removeHeaderRow(index: number) {
+    this.headers.removeAt(index);
+  }
+
+  // ====================
+  // REQUEST EXECUTION
+  // ====================
+
+  executeRequest() {
+    const method = this.requestService.method();
+
+    const url = this.requestService.url();
+
+    const curl = this.generateCurlCommand(method, url);
+
+    console.log('Ejecutando con cURL:', curl);
+  }
+
+  // ====================
+  // LOCAL STORAGE
+  // ====================
 
   private saveToLocalStorage() {
-    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.form.value));
+    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.form.getRawValue()));
   }
 
   private loadFromLocalStorage() {
     const saved = localStorage.getItem(this.STORAGE_KEY);
 
-    if (saved) {
-      const config = JSON.parse(saved);
-
-      // Rebuild params FormArray
-      if (config.params?.length) {
-        config.params.forEach((p: any) =>
-          this.params.push(this.createParamRow(p.key, p.value, p.description)),
-        );
-      } else {
-        this.setDefaultParams();
-      }
-
-      // Rebuild headers FormArray
-      if (config.headers?.length) {
-        config.headers.forEach((h: any) =>
-          this.headers.push(this.createHeaderRow(h.key, h.value, h.description)),
-        );
-      } else {
-        this.setDefaultHeaders();
-      }
-
-      // Patch scalar groups
-      if (config.auth) this.auth.patchValue(config.auth);
-      if (config.body) this.body.patchValue(config.body);
-    } else {
+    if (!saved) {
       this.setDefaultParams();
       this.setDefaultHeaders();
+      return;
     }
+
+    const config = JSON.parse(saved);
+
+    config.params?.length
+      ? config.params.forEach((p: any) =>
+          this.params.push(this.createKeyValueRow(p.key, p.value, p.description)),
+        )
+      : this.setDefaultParams();
+
+    config.headers?.length
+      ? config.headers.forEach((h: any) =>
+          this.headers.push(this.createKeyValueRow(h.key, h.value, h.description)),
+        )
+      : this.setDefaultHeaders();
+
+    this.auth.patchValue(config.auth ?? {});
+
+    this.body.patchValue(config.body ?? {});
   }
 
   private setDefaultParams() {
-    this.params.push(this.createParamRow('page', '1', 'Pagination page number'));
-    this.params.push(this.createParamRow('limit', '10', 'Items per page'));
+    this.params.push(this.createKeyValueRow('page', '1', 'Pagination page number'));
+
+    this.params.push(this.createKeyValueRow('limit', '10', 'Items per page'));
   }
 
   private setDefaultHeaders() {
     this.headers.push(
-      this.createHeaderRow('Content-Type', 'application/json', 'Content type header'),
+      this.createKeyValueRow('Content-Type', 'application/json', 'Content type header'),
     );
+
     this.headers.push(
-      this.createHeaderRow('Accept', 'application/json', 'Accepted response format'),
+      this.createKeyValueRow('Accept', 'application/json', 'Accepted response format'),
     );
   }
 
-  private setupAutoSave() {
-    this.autoSaveInterval = setInterval(() => this.saveToLocalStorage(), 30000);
+  // ====================
+  // cURL
+  // ====================
+
+  generateCurlCommand(method: string, url: string): string {
+    const { params = [], headers = [], auth, body } = this.form.getRawValue();
+
+    const validParams = params.filter((p: any) => p.key?.trim());
+
+    let curl = validParams.length
+      ? `curl -X ${method} '${url}?${validParams
+          .map((p: any) => `${encodeURIComponent(p.key)}=${encodeURIComponent(p.value)}`)
+          .join('&')}'`
+      : `curl -X ${method} '${url}'`;
+
+    headers
+      .filter((h: any) => h.key?.trim())
+      .forEach((h: any) => {
+        curl += ` \\
+  -H '${h.key}: ${h.value}'`;
+      });
+
+    if (auth.type === 'bearer' && auth.bearerToken) {
+      curl += ` \\
+  -H 'Authorization: Bearer ${auth.bearerToken}'`;
+    }
+
+    if (auth.type === 'basic' && auth.basicUsername) {
+      curl += ` \\
+  -u '${auth.basicUsername}:${auth.basicPassword}'`;
+    }
+
+    if (body.type === 'json' && body.jsonContent) {
+      curl += ` \\
+  -H 'Content-Type: application/json' \\
+  -d '${body.jsonContent.replace(/'/g, "'\\''")}'`;
+    }
+
+    return curl;
   }
-
-  // ==================== cURL ====================
-
-generateCurlCommand(method: string, url: string): string {
-  const { params, headers, auth, body } = this.form.value;
-
-  const validParams = params.filter((p: any) => p.key?.trim());
-
-  let curl = validParams.length
-    ? `curl -X ${method} '${url}?${validParams.map((p: any) => `${encodeURIComponent(p.key)}=${encodeURIComponent(p.value)}`).join('&')}'`
-    : `curl -X ${method} '${url}'`;
-
-  headers
-    .filter((h: any) => h.key?.trim())
-    .forEach((h: any) => {
-      curl += ` \\\n  -H '${h.key}: ${h.value}'`;
-    });
-
-  if (auth.type === 'bearer' && auth.bearerToken) {
-    curl += ` \\\n  -H 'Authorization: Bearer ${auth.bearerToken}'`;
-  } else if (auth.type === 'basic' && auth.basicUsername) {
-    curl += ` \\\n  -u '${auth.basicUsername}:${auth.basicPassword}'`;
-  }
-
-  if (body.type === 'json' && body.jsonContent) {
-    curl += ` \\\n  -H 'Content-Type: application/json' \\\n  -d '${body.jsonContent.replace(/'/g, "'\\''")}'`;
-  }
-
-  return curl;
-}
 
   async copyCurlToClipboard() {
     if (this.requestService.isUrlInvalid()) {
-    console.warn("URL inválida, abortando copiado.");
-    return;
-  }
+      console.warn('URL inválida');
+      return;
+    }
+
     try {
-      await navigator.clipboard.writeText(this.generateCurlCommand(this.requestService.method(), this.requestService.url()));
+      await navigator.clipboard.writeText(
+        this.generateCurlCommand(this.requestService.method(), this.requestService.url()),
+      );
+
       this.isCopying.set(true);
-      this.copyTimeout = setTimeout(() => this.isCopying.set(false), 2000);
+
+      setTimeout(() => {
+        this.isCopying.set(false);
+      }, 2000);
     } catch (err) {
       console.error('Clipboard API not available:', err);
     }
   }
 
+  // ====================
+  // JSON
+  // ====================
+
   formatJson() {
-  const raw = this.body.get('jsonContent')?.value;
-  try {
-    const parsed = JSON.parse(raw);
-    const pretty = JSON.stringify(parsed, null, 2);
-    this.body.get('jsonContent')?.setValue(pretty);
-  } catch {
-    // Invalid JSON — the button is already disabled but just in case
+    const raw = this.body.get('jsonContent')?.value;
+
+    try {
+      const parsed = JSON.parse(raw);
+
+      this.body.get('jsonContent')?.setValue(JSON.stringify(parsed, null, 2));
+    } catch {}
   }
-}
 
-isValidJson(): boolean {
-  try {
-    JSON.parse(this.body.get('jsonContent')?.value ?? '');
-    return true;
-  } catch {
-    return false;
+  isValidJson(): boolean {
+    const content = this.body.get('jsonContent')?.value?.trim() ?? '';
+
+    // Vacío = estado neutral, no error
+    if (!content) {
+      return true;
+    }
+
+    try {
+      JSON.parse(content);
+      return true;
+    } catch {
+      return false;
+    }
   }
-}
-
-  // ==================== JSON EDITOR ====================
-
-  jsonContent = signal<string>('');
 
   jsonLineCount(): number {
     const content = this.body.get('jsonContent')?.value ?? '';
+
     return content ? content.split('\n').length : 0;
   }
 
   jsonCharCount(): number {
-    const content = this.body.get('jsonContent')?.value ?? '';
-    return content.length;
+    return this.body.get('jsonContent')?.value?.length ?? 0;
   }
 
   clearJson() {
     this.body.get('jsonContent')?.setValue('');
   }
 
-  // Copy JSON to clipboard with feedback
-  async copyJsonToClipboard(): Promise<void> {
-  const content = this.body.get('jsonContent')?.value;
-  if (!content) return;
+  async copyJsonToClipboard() {
+    const content = this.body.get('jsonContent')?.value;
 
-  try {
-    await navigator.clipboard.writeText(content);
-    this.isJsonCopying.set(true);
+    if (!content) return;
 
-    setTimeout(() => {
-      this.isJsonCopying.set(false);
-    }, 2000);
-  } catch (err) {
-    console.error('Failed to copy:', err);
+    try {
+      await navigator.clipboard.writeText(content);
+
+      this.isJsonCopying.set(true);
+
+      setTimeout(() => {
+        this.isJsonCopying.set(false);
+      }, 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
   }
-}
 }

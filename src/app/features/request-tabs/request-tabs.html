@@ -1,40 +1,70 @@
 <form [formGroup]="form">
 
+  <ng-template #copyCurlButton>
+    <div class="d-flex justify-content-end mb-2">
+      <button
+        type="button"
+        class="btn btn-sm btn-outline-secondary"
+        (click)="copyCurlToClipboard()"
+        [disabled]="isCopying()">
+        <i class="fas fa-terminal me-1"></i>
+        {{ isCopying() ? 'Copied!' : 'Copy cURL' }}
+      </button>
+    </div>
+  </ng-template>
+
   <!-- TABS NAV -->
-  <ul class="nav nav-tabs mb-3" id="requestTabs" role="tablist">
+  <ul class="nav nav-tabs mb-3" role="tablist">
     <li class="nav-item">
-      <button class="nav-link" [class.active]="activeTab() === 'params'" (click)="setActiveTab('params')" type="button">
-        <i class="fas fa-table me-1"></i> Params
-      </button>
-    </li>
-    <li class="nav-item">
-      <button class="nav-link" [class.active]="activeTab() === 'headers'" (click)="setActiveTab('headers')"
+      <button
+        class="nav-link"
+        [class.active]="activeTab() === 'params'"
+        (click)="setActiveTab('params')"
         type="button">
-        <i class="fas fa-heading me-1"></i> Headers
+        <i class="fas fa-table me-1"></i>
+        Params
       </button>
     </li>
+
     <li class="nav-item">
-      <button class="nav-link" [class.active]="activeTab() === 'auth'" (click)="setActiveTab('auth')" type="button">
-        <i class="fas fa-lock me-1"></i> Authorization
+      <button
+        class="nav-link"
+        [class.active]="activeTab() === 'headers'"
+        (click)="setActiveTab('headers')"
+        type="button">
+        <i class="fas fa-heading me-1"></i>
+        Headers
       </button>
     </li>
+
     <li class="nav-item">
-      <button class="nav-link" [class.active]="activeTab() === 'body'" (click)="setActiveTab('body')" type="button">
-        <i class="fas fa-code me-1"></i> Body
+      <button
+        class="nav-link"
+        [class.active]="activeTab() === 'auth'"
+        (click)="setActiveTab('auth')"
+        type="button">
+        <i class="fas fa-lock me-1"></i>
+        Authorization
+      </button>
+    </li>
+
+    <li class="nav-item">
+      <button
+        class="nav-link"
+        [class.active]="activeTab() === 'body'"
+        (click)="setActiveTab('body')"
+        type="button">
+        <i class="fas fa-code me-1"></i>
+        Body
       </button>
     </li>
   </ul>
 
   <div class="tab-content mb-4">
-
-    <!-- PARAMS TAB -->
+    <!-- PARAMS -->
     <div class="tab-pane" [class.show]="activeTab() === 'params'" [class.active]="activeTab() === 'params'">
-      <div class="d-flex justify-content-end mb-2">
-        <button type="button" class="btn btn-sm btn-outline-secondary" (click)="copyCurlToClipboard()"
-          [disabled]="isCopying()">
-          <i class="fas fa-terminal me-1"></i> {{ isCopying() ? 'Copied!' : 'Copy cURL' }}
-        </button>
-      </div>
+      <ng-container [ngTemplateOutlet]="copyCurlButton"></ng-container>
+
       <table class="table params-table mb-0">
         <thead>
           <tr>
@@ -44,35 +74,53 @@
             <th style="width: 40px"></th>
           </tr>
         </thead>
+
         <tbody formArrayName="params">
-          @for (param of params.controls; track $index) {
+
+          @for (
+          param of params.controls;
+          track $index
+          ) {
           <tr [formGroupName]="$index">
-            <td><input type="text" formControlName="key" placeholder="Key"></td>
-            <td><input type="text" formControlName="value" placeholder="Value"></td>
-            <td><input type="text" formControlName="description" placeholder="Description"></td>
+            <td>
+              <input type="text" formControlName="key" placeholder="Key" />
+            </td>
+
+            <td>
+              <input type="text" formControlName="value" placeholder="Value" />
+            </td>
+
+            <td>
+              <input type="text" formControlName="description" placeholder="Description" />
+            </td>
+
             <td>
               <button type="button" class="btn btn-sm btn-link text-danger" (click)="removeParamRow($index)">
                 <i class="fas fa-trash"></i>
               </button>
             </td>
+
           </tr>
           }
+
         </tbody>
       </table>
-      <button type="button" class="btn btn-sm btn-link mt-2" (click)="addParamRow()">
-        <i class="fas fa-plus me-1"></i> Add Parameter
+
+      <button
+        type="button"
+        class="btn btn-sm btn-link mt-2"
+        (click)="addParamRow()">
+        <i class="fas fa-plus me-1"></i>
+        Add Parameter
       </button>
     </div>
 
-    <!-- HEADERS TAB -->
+    <!-- HEADERS -->
     <div class="tab-pane" [class.show]="activeTab() === 'headers'" [class.active]="activeTab() === 'headers'">
-      <div class="d-flex justify-content-end mb-2">
-        <button type="button" class="btn btn-sm btn-outline-secondary" (click)="copyCurlToClipboard()"
-          [disabled]="isCopying()">
-          <i class="fas fa-terminal me-1"></i> {{ isCopying() ? 'Copied!' : 'Copy cURL' }}
-        </button>
-      </div>
+      <ng-container [ngTemplateOutlet]="copyCurlButton"></ng-container>
+
       <table class="table params-table mb-0">
+
         <thead>
           <tr>
             <th>KEY</th>
@@ -81,132 +129,195 @@
             <th style="width: 40px"></th>
           </tr>
         </thead>
+
         <tbody formArrayName="headers">
-          @for (header of headers.controls; track $index) {
+
+          @for (
+          header of headers.controls;
+          track $index
+          ) {
+
           <tr [formGroupName]="$index">
-            <td><input type="text" formControlName="key" placeholder="Key"></td>
-            <td><input type="text" formControlName="value" placeholder="Value"></td>
-            <td><input type="text" formControlName="description" placeholder="Description"></td>
+
             <td>
-              <button type="button" class="btn btn-sm btn-link text-danger" (click)="removeHeaderRow($index)">
+              <input type="text" formControlName="key" placeholder="Key" />
+            </td>
+
+            <td>
+              <input type="text" formControlName="value" placeholder="Value" />
+            </td>
+
+            <td>
+              <input type="text" formControlName="description" placeholder="Description" />
+            </td>
+
+            <td>
+              <button
+                type="button"
+                class="btn btn-sm btn-link text-danger"
+                (click)="removeHeaderRow($index)">
                 <i class="fas fa-trash"></i>
               </button>
             </td>
+
           </tr>
           }
+
         </tbody>
       </table>
-      <button type="button" class="btn btn-sm btn-link mt-2" (click)="addHeaderRow()">
-        <i class="fas fa-plus me-1"></i> Add Header
+
+      <button
+        type="button"
+        class="btn btn-sm btn-link mt-2"
+        (click)="addHeaderRow()">
+        <i class="fas fa-plus me-1"></i>
+        Add Header
       </button>
     </div>
 
-    <!-- AUTH TAB -->
+    <!-- AUTH -->
     <div class="tab-pane" [class.show]="activeTab() === 'auth'" [class.active]="activeTab() === 'auth'"
       formGroupName="auth">
-      <div class="d-flex justify-content-end mb-2">
-        <button type="button" class="btn btn-sm btn-outline-secondary" (click)="copyCurlToClipboard()"
-          [disabled]="isCopying()">
-          <i class="fas fa-terminal me-1"></i> {{ isCopying() ? 'Copied!' : 'Copy cURL' }}
-        </button>
-      </div>
+      <ng-container [ngTemplateOutlet]="copyCurlButton"></ng-container>
+
       <div class="mb-3">
+
         <label class="form-label fw-semibold mb-2">
-          <i class="fas fa-key me-1 text-info"></i> Auth Type
+          <i class="fas fa-key me-1 text-info"></i>
+          Auth Type
         </label>
+
         <select class="form-select mb-3" style="width: 200px;" formControlName="type">
           <option value="none">None</option>
-          <option value="bearer">Bearer Token</option>
+          <option value="bearer"> Bearer Token </option>
           <option value="basic">Basic Auth</option>
         </select>
 
-        @if (authType === 'bearer') {
+        @if (authType() === 'bearer') {
+
         <div>
           <label class="form-label fw-semibold mb-2">Bearer Token</label>
           <input type="text" class="form-control bearer-input" formControlName="bearerToken"
-            placeholder="your-token-here">
+            placeholder="your-token-here" />
+
           <div class="form-text mt-2">
-            <small>Token will be sent as: <code>Authorization: Bearer &lt;token&gt;</code></small>
+            <small>
+              Token will be sent as:
+              <code>
+                  Authorization:
+                  Bearer &lt;token&gt;
+                </code>
+            </small>
           </div>
         </div>
         }
 
-        @if (authType === 'basic') {
+        @if (authType() === 'basic') {
+
         <div>
           <label class="form-label fw-semibold mb-2">Username</label>
-          <input type="text" class="form-control mb-2" formControlName="basicUsername" placeholder="username">
+          <input type="text" class="form-control mb-2" formControlName="basicUsername" placeholder="username" />
           <label class="form-label fw-semibold mb-2">Password</label>
-          <input type="password" class="form-control" formControlName="basicPassword" placeholder="password">
+          <input type="password" class="form-control" formControlName="basicPassword" placeholder="password" />
         </div>
         }
+
       </div>
     </div>
 
-    <!-- BODY TAB -->
+    <!-- BODY -->
     <div class="tab-pane" [class.show]="activeTab() === 'body'" [class.active]="activeTab() === 'body'"
       formGroupName="body">
-      <div class="d-flex justify-content-end mb-2">
-        <button type="button" class="btn btn-sm btn-outline-secondary" (click)="copyCurlToClipboard()"
-          [disabled]="isCopying()">
-          <i class="fas fa-terminal me-1"></i> {{ isCopying() ? 'Copied!' : 'Copy cURL' }}
-        </button>
-      </div>
+      <ng-container [ngTemplateOutlet]="copyCurlButton"></ng-container>
 
       <div class="mb-3">
+
         <label class="form-label fw-semibold mb-2">
-          <i class="fas fa-file-code me-1 text-info"></i> Content Type
+          <i class="fas fa-file-code me-1 text-info"></i>
+          Content Type
         </label>
-        <select class="form-select content-type-select mb-3" formControlName="type">
+
+        <select class="form-select mb-3" style="width: 200px;" formControlName="type">
           <option value="none">None</option>
           <option value="json">JSON</option>
         </select>
 
-        @if (bodyType === 'json') {
+        @if (bodyType() === 'json') {
+
         <div class="json-editor-panel">
+
           <!-- Toolbar -->
           <div class="json-editor-toolbar">
+
             <div class="d-flex align-items-center gap-2">
               <i class="fas fa-code text-info"></i>
               <span class="fw-semibold">JSON Editor</span>
             </div>
+
             <div class="d-flex align-items-center gap-1">
-              <button type="button" class="btn btn-sm json-toolbar-btn" (click)="formatJson()" title="Format JSON">
-                <i class="fas fa-magic me-1"></i> Format
+
+              <button
+                type="button"
+                class="btn btn-sm json-toolbar-btn"
+                (click)="formatJson()">
+                <i class="fas fa-magic me-1"></i>
+                Format
               </button>
-              <button type="button" class="btn btn-sm json-toolbar-btn" (click)="copyJsonToClipboard()"
-                title="Copy to clipboard">
+
+              <button
+                type="button"
+                class="btn btn-sm json-toolbar-btn"
+                (click)="copyJsonToClipboard()">
                 <i class="fas" [class.fa-copy]="!isJsonCopying()" [class.fa-check]="isJsonCopying()"></i>
                 {{ isJsonCopying() ? 'Copied!' : 'Copy' }}
               </button>
-              <button type="button" class="btn btn-sm json-toolbar-btn" (click)="clearJson()" title="Clear editor">
-                <i class="fas fa-eraser me-1"></i> Clear
+
+              <button
+                type="button"
+                class="btn btn-sm json-toolbar-btn"
+                (click)="clearJson()">
+                <i class="fas fa-eraser me-1"></i>
+                Clear
               </button>
+
             </div>
           </div>
 
-          <!-- Editor Area -->
+          <!-- Editor -->
           <div class="json-editor-area" [class.json-invalid]="!isValidJson()">
-            <textarea class="json-textarea" [class.text-danger]="!isValidJson()" rows="12" formControlName="jsonContent"
-              placeholder='{"key": "value"}' spellcheck="false">
+            <textarea
+              class="json-textarea" rows="12"
+              formControlName="jsonContent"
+              [class.text-danger]="!isValidJson()"
+              placeholder='{"key":"value"}' spellcheck="false">
             </textarea>
           </div>
 
-          <!-- Status Bar -->
+          <!-- Status -->
           <div class="json-editor-status">
+
             @if (isValidJson()) {
+
             <div class="d-flex align-items-center gap-2 text-muted small">
-              <span>{{ jsonLineCount() }} lines</span>
+              <span>{{ jsonLineCount() }} lines </span>
               <span>·</span>
-              <span>{{ jsonCharCount() }} chars</span>
+              <span>{{ jsonCharCount() }} chars </span>
             </div>
+
             } @else {
+
             <div class="text-danger small fw-bold">
-              <i class="fas fa-exclamation-circle me-1"></i> Invalid JSON object
+              <i class="fas fa-exclamation-circle me-1"></i>
+              Invalid JSON object
             </div>
+
             }
+
           </div>
+
         </div>
         }
+
       </div>
     </div>
 
