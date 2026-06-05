@@ -1,19 +1,31 @@
 <div class="response-section">
-  <div class="response-header d-flex justify-content-between align-items-center flex-wrap gap-2">
-    <div class="response-meta d-flex gap-4">
-      <span><i class="fas fa-circle text-success me-1 status-icon"></i> <strong>Status:</strong> 200 OK</span>
-      <span><i class="fas fa-clock me-1"></i> <strong>Time:</strong> 120ms</span>
-      <span><i class="fas fa-database me-1"></i> <strong>Size:</strong> 1.2KB</span>
+  @if (isLoading()) {
+    <div class="text-center py-5">Loading...</div>
+  } @else if (error()) {
+    <div class="text-center py-5 text-danger">Error: {{ error() }}</div>
+  } @else if (response()) {
+    <div class="response-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div class="response-meta d-flex gap-4">
+        <span [class.text-success]="response()!.status < 300" [class.text-danger]="response()!.status >= 400">
+          <i class="fas fa-circle me-1"></i> <strong>Status:</strong> {{ response()?.status }} {{ response()?.statusText }}
+        </span>
+
+        <span><i class="fas fa-clock me-1"></i> <strong>Time:</strong> {{ response()?.duration }}</span>
+
+        <span><i class="fas fa-database me-1"></i> <strong>Size:</strong> {{ response()?.headers?.['content-length'] ? (response()?.headers?.['content-length'] / 1024 | number:'1.1-1') + 'KB' : 'N/A' }}</span>
+      </div>
+
+      <button class="btn btn-sm btn-outline-secondary">
+        <i class="fas fa-save me-1"></i> Save Response
+      </button>
     </div>
-    <button class="btn btn-sm btn-outline-secondary">
-      <i class="fas fa-save me-1"></i> Save Response
-    </button>
-  </div>
-<div class="response-body">
-      @if(response()) {
-        <ngx-json-viewer [json]="response()"></ngx-json-viewer>
-      } @else {
-        <div class="text-muted text-center py-5">No response yet</div>
+
+    <div class="response-body">
+      @if (response() && response()?.body) {
+        <ngx-json-viewer [json]="response()?.body"></ngx-json-viewer>
       }
     </div>
+  } @else {
+    <div class="text-muted text-center py-5">No response yet</div>
+  }
 </div>

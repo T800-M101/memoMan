@@ -1,27 +1,44 @@
-import { Injectable, signal } from '@angular/core';
+import { inject, Injectable, signal } from '@angular/core';
 import { RequestConfig } from '../interfaces/request-config.interface';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { lastValueFrom, Observable } from 'rxjs';
+import {
+  BackendResponse,
+  ProxyRequest,
+  ProxyResponse,
+} from '../interfaces/backend.response.interface';
 
 @Injectable({
   providedIn: 'root',
 })
 export class RequestService {
   private readonly STORAGE_KEY = 'memoman_request_config';
+  private http = inject(HttpClient);
+
+  private proxyUrl = 'http://localhost:3000/proxy';
 
   private sendCounter = signal<number>(0);
-
   resetTrigger = signal(0);
 
+  response = signal<BackendResponse | null>(null);
+  isLoading = signal(false);
+  requestError = signal<string | null>(null);
+
   isUrlInvalid(): boolean {
-    const url = this.requestConfig().url?.trim();
+    let url = this.requestConfig().url?.trim();
 
     if (!url) {
       return true;
     }
 
+    // Auto-add https:// if no protocol is specified
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      url = 'https://' + url;
+    }
+
     try {
       new URL(url);
       return false;
-      
     } catch {
       return true;
     }
@@ -60,12 +77,23 @@ export class RequestService {
     return this.requestConfig();
   }
 
-  sendRequested() {
-    return this.sendCounter();
+  sendRequest(request: ProxyRequest): Observable<ProxyResponse> {
+    const params = new HttpParams().set('url', request.url);
+
+    return this.http.post<ProxyResponse>(
+      this.proxyUrl,
+      {
+        method: request.method,
+        headers: request.headers,
+        body: request.body,
+      },
+      { params },
+    );
   }
 
   triggerSend() {
     this.sendCounter.update((count) => count + 1);
+    this.executeRequest();
   }
 
   updateMethod(method: string) {
@@ -137,5 +165,63 @@ export class RequestService {
 
     // notify listeners
     this.resetTrigger.update((v) => v + 1);
+  }
+
+  async executeRequest() {
+    const backendUrl = 'http://localhost:3000/proxy';
+    const target = this.requestConfig().url;
+    console.log('Haciendo fetch a:', `${backendUrl}?url=${encodeURIComponent(target)}`);
+
+    const config = this.requestConfig();
+
+    if (this.isUrlInvalid()) {
+      this.requestError.set('URL inválida');
+      return;
+    }
+
+    this.isLoading.set(true);
+
+    const payload: ProxyRequest = {
+      url: config.url,
+      method: config.method,
+      headers: this.formatHeaders(config.headers),
+      body:
+        config.method !== 'GET' && config.body?.jsonContent
+          ? JSON.parse(config.body.jsonContent)
+          : null,
+    };
+
+    try {
+      const result = await lastValueFrom(this.sendRequest(payload));
+
+      if (typeof result.body === 'string') {
+        result.body = JSON.parse(result.body);
+      }
+
+      this.response.set(result);
+    } catch (err) {
+      this.requestError.set('Error al conectar con el proxy');
+    } finally {
+      this.isLoading.set(false);
+    }
+  }
+
+  private buildBackendRequest(config: RequestConfig) {
+    return {
+      method: config.method,
+      headers: this.formatHeaders(config.headers),
+      body:
+        config.method !== 'GET' && config.body?.jsonContent
+          ? JSON.parse(config.body.jsonContent)
+          : null,
+    };
+  }
+
+  private formatHeaders(headers: any[]) {
+    const h: Record<string, string> = {};
+    headers.forEach((header) => {
+      if (header.key && header.value) h[header.key] = header.value;
+    });
+    return h;
   }
 }
