@@ -1,17 +1,29 @@
 <form [formGroup]="form">
 
   <ng-template #copyCurlButton>
-    <div class="d-flex justify-content-end mb-2">
-      <button
-        type="button"
-        class="btn btn-sm btn-outline-secondary"
-        (click)="copyCurlToClipboard()"
-        [disabled]="isCopying()">
-        <i class="fas fa-terminal me-1"></i>
-        {{ isCopying() ? 'Copied!' : 'Copy cURL' }}
-      </button>
-    </div>
-  </ng-template>
+  <div class="d-flex justify-content-end align-items-center gap-2 mb-2">
+
+    <!-- Copy cURL -->
+    <button
+      type="button"
+      class="btn btn-sm btn-outline-secondary"
+      (click)="copyCurlToClipboard()"
+      [disabled]="isCopying()">
+      <i class="fas fa-terminal me-1"></i>
+      {{ isCopying() ? 'Copied!' : 'Copy cURL' }}
+    </button>
+
+    <!-- Reset Request -->
+    <button
+      type="button"
+      class="btn btn-sm btn-outline-danger"
+      (click)="resetRequest()">
+      <i class="fas fa-rotate-left me-1"></i>
+      Reset
+    </button>
+
+  </div>
+</ng-template>
 
   <!-- TABS NAV -->
   <ul class="nav nav-tabs mb-3" role="tablist">

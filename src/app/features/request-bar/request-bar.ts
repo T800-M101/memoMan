@@ -1,4 +1,4 @@
-import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import { Component, DestroyRef, effect, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { RequestService } from '../../core/services/request-service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -15,7 +15,9 @@ export class RequestBar implements OnInit {
   private destroyRef = inject(DestroyRef);
 
   requestService = inject(RequestService);
+
   isTouched = false;
+
   isUrlFocused = signal<boolean>(false);
 
   requestForm = this.fb.group({
@@ -23,13 +25,41 @@ export class RequestBar implements OnInit {
     url: [''],
   });
 
+  constructor() {
+    effect(() => {
+      this.requestService.resetTrigger();
+
+      this.requestForm.patchValue(
+        {
+          method: 'GET',
+          url: '',
+        },
+        {
+          emitEvent: false,
+        },
+      );
+
+      this.isTouched = false;
+    });
+  }
+
   ngOnInit() {
+    const config = this.requestService.config();
+
+    // Restore persisted state
+    this.requestForm.patchValue({
+      method: config.method,
+      url: config.url,
+    });
+
+    // Sync method
     this.method?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((method) => {
       if (!method) return;
 
       this.requestService.updateMethod(method);
     });
 
+    // Sync url
     this.url?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((url) => {
       this.requestService.updateUrl(url || '');
     });
@@ -41,6 +71,7 @@ export class RequestBar implements OnInit {
 
   onInputBlur() {
     this.isTouched = true;
+
     this.isUrlFocused.set(false);
   }
 

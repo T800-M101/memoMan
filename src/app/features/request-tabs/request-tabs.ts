@@ -1,7 +1,10 @@
-import { Component, computed, DestroyRef, effect, inject, signal } from '@angular/core';
+import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
+
 import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
+
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NgTemplateOutlet } from '@angular/common';
+
 import { RequestService } from '../../core/services/request-service';
 
 @Component({
@@ -11,14 +14,17 @@ import { RequestService } from '../../core/services/request-service';
   templateUrl: './request-tabs.html',
   styleUrls: ['./request-tabs.scss'],
 })
-export class RequestTabs {
-  private readonly STORAGE_KEY = 'memoman_request_config';
+export class RequestTabs implements OnInit {
   private fb = inject(FormBuilder);
+
   private requestService = inject(RequestService);
+
   private destroyRef = inject(DestroyRef);
 
   activeTab = signal<string>('params');
+
   isCopying = signal<boolean>(false);
+
   isJsonCopying = signal<boolean>(false);
 
   form: FormGroup = this.fb.group({
@@ -43,17 +49,23 @@ export class RequestTabs {
 
   bodyType = computed(() => this.body.get('type')?.value);
 
-  constructor() {
-    this.loadFromLocalStorage();
+  ngOnInit(): void {
+    const config = this.requestService.config();
 
-    this.form.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
-      this.saveToLocalStorage();
-    });
+    this.restoreForm(config);
 
-    effect(() => {
-      if (this.requestService.sendRequested() > 0) {
-        this.executeRequest();
-      }
+    this.initializeDefaults();
+
+    this.form.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((value) => {
+      this.requestService.updateTabsConfig({
+        params: value.params ?? [],
+
+        headers: value.headers ?? [],
+
+        auth: value.auth,
+
+        body: value.body,
+      });
     });
   }
 
@@ -83,6 +95,27 @@ export class RequestTabs {
 
   setActiveTab(tab: string) {
     this.activeTab.set(tab);
+  }
+
+  // ====================
+  // RESTORE FORM
+  // ====================
+
+  private restoreForm(config: any) {
+    this.params.clear();
+    this.headers.clear();
+
+    config.params?.forEach((p: any) => {
+      this.params.push(this.createKeyValueRow(p.key, p.value, p.description));
+    });
+
+    config.headers?.forEach((h: any) => {
+      this.headers.push(this.createKeyValueRow(h.key, h.value, h.description));
+    });
+
+    this.auth.patchValue(config.auth ?? {});
+
+    this.body.patchValue(config.body ?? {});
   }
 
   // ====================
@@ -118,65 +151,8 @@ export class RequestTabs {
   // ====================
 
   executeRequest() {
-    const method = this.requestService.method();
-
-    const url = this.requestService.url();
-
-    const curl = this.generateCurlCommand(method, url);
-
-    console.log('Ejecutando con cURL:', curl);
-  }
-
-  // ====================
-  // LOCAL STORAGE
-  // ====================
-
-  private saveToLocalStorage() {
-    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.form.getRawValue()));
-  }
-
-  private loadFromLocalStorage() {
-    const saved = localStorage.getItem(this.STORAGE_KEY);
-
-    if (!saved) {
-      this.setDefaultParams();
-      this.setDefaultHeaders();
-      return;
-    }
-
-    const config = JSON.parse(saved);
-
-    config.params?.length
-      ? config.params.forEach((p: any) =>
-          this.params.push(this.createKeyValueRow(p.key, p.value, p.description)),
-        )
-      : this.setDefaultParams();
-
-    config.headers?.length
-      ? config.headers.forEach((h: any) =>
-          this.headers.push(this.createKeyValueRow(h.key, h.value, h.description)),
-        )
-      : this.setDefaultHeaders();
-
-    this.auth.patchValue(config.auth ?? {});
-
-    this.body.patchValue(config.body ?? {});
-  }
-
-  private setDefaultParams() {
-    this.params.push(this.createKeyValueRow('page', '1', 'Pagination page number'));
-
-    this.params.push(this.createKeyValueRow('limit', '10', 'Items per page'));
-  }
-
-  private setDefaultHeaders() {
-    this.headers.push(
-      this.createKeyValueRow('Content-Type', 'application/json', 'Content type header'),
-    );
-
-    this.headers.push(
-      this.createKeyValueRow('Accept', 'application/json', 'Accepted response format'),
-    );
+    const config = this.requestService.config();
+    const curl = this.generateCurlCommand(config.method, config.url);
   }
 
   // ====================
@@ -186,35 +162,92 @@ export class RequestTabs {
   generateCurlCommand(method: string, url: string): string {
     const { params = [], headers = [], auth, body } = this.form.getRawValue();
 
+    // ====================
+    // Helpers
+    // ====================
+
+    const escapeSingleQuotes = (value: string) => value.replace(/'/g, `'\\''`);
+
+    const safeUrl = url?.trim() || '';
+
+    // ====================
+    // Query Params
+    // ====================
+
     const validParams = params.filter((p: any) => p.key?.trim());
 
-    let curl = validParams.length
-      ? `curl -X ${method} '${url}?${validParams
-          .map((p: any) => `${encodeURIComponent(p.key)}=${encodeURIComponent(p.value)}`)
-          .join('&')}'`
-      : `curl -X ${method} '${url}'`;
+    const queryString = validParams.length
+      ? validParams
+          .map((p: any) => {
+            const key = encodeURIComponent(p.key.trim());
+
+            const value = encodeURIComponent(p.value ?? '');
+
+            return `${key}=${value}`;
+          })
+          .join('&')
+      : '';
+
+    const finalUrl = queryString
+      ? `${safeUrl}${safeUrl.includes('?') ? '&' : '?'}${queryString}`
+      : safeUrl;
+
+    // ====================
+    // Base curl
+    // ====================
+
+    let curl = `curl -X ${method.toUpperCase()} '${finalUrl}'`;
+
+    // ====================
+    // Headers
+    // ====================
+
+    const addedHeaders = new Set<string>();
 
     headers
       .filter((h: any) => h.key?.trim())
       .forEach((h: any) => {
+        const key = h.key.trim();
+
+        const value = h.value ?? '';
+
+        const normalizedKey = key.toLowerCase();
+
+        addedHeaders.add(normalizedKey);
+
         curl += ` \\
-  -H '${h.key}: ${h.value}'`;
+  -H '${escapeSingleQuotes(`${key}: ${value}`)}'`;
       });
 
-    if (auth.type === 'bearer' && auth.bearerToken) {
+    // ====================
+    // Authorization
+    // ====================
+
+    if (auth?.type === 'bearer' && auth.bearerToken?.trim()) {
       curl += ` \\
-  -H 'Authorization: Bearer ${auth.bearerToken}'`;
+  -H 'Authorization: Bearer ${escapeSingleQuotes(auth.bearerToken.trim())}'`;
     }
 
-    if (auth.type === 'basic' && auth.basicUsername) {
+    if (auth?.type === 'basic' && auth.basicUsername) {
       curl += ` \\
-  -u '${auth.basicUsername}:${auth.basicPassword}'`;
+  -u '${escapeSingleQuotes(auth.basicUsername)}:${escapeSingleQuotes(auth.basicPassword ?? '')}'`;
     }
 
-    if (body.type === 'json' && body.jsonContent) {
+    // ====================
+    // Body
+    // ====================
+
+    const hasJsonBody = body?.type === 'json' && body.jsonContent?.trim();
+
+    if (hasJsonBody) {
+      // Add Content-Type only if user didn't already add it
+      if (!addedHeaders.has('content-type')) {
+        curl += ` \\
+  -H 'Content-Type: application/json'`;
+      }
+
       curl += ` \\
-  -H 'Content-Type: application/json' \\
-  -d '${body.jsonContent.replace(/'/g, "'\\''")}'`;
+  -d '${escapeSingleQuotes(body.jsonContent)}'`;
     }
 
     return curl;
@@ -223,13 +256,14 @@ export class RequestTabs {
   async copyCurlToClipboard() {
     if (this.requestService.isUrlInvalid()) {
       console.warn('URL inválida');
+
       return;
     }
 
     try {
-      await navigator.clipboard.writeText(
-        this.generateCurlCommand(this.requestService.method(), this.requestService.url()),
-      );
+      const config = this.requestService.config();
+
+      await navigator.clipboard.writeText(this.generateCurlCommand(config.method, config.url));
 
       this.isCopying.set(true);
 
@@ -258,13 +292,13 @@ export class RequestTabs {
   isValidJson(): boolean {
     const content = this.body.get('jsonContent')?.value?.trim() ?? '';
 
-    // Vacío = estado neutral, no error
     if (!content) {
       return true;
     }
 
     try {
       JSON.parse(content);
+
       return true;
     } catch {
       return false;
@@ -302,4 +336,42 @@ export class RequestTabs {
       console.error('Failed to copy:', err);
     }
   }
+
+  private initializeDefaults() {
+  if (this.params.length === 0) {
+    this.params.push(
+      this.createKeyValueRow(
+        'page',
+        '1',
+        'Pagination page',
+      ),
+    );
+
+    this.params.push(
+      this.createKeyValueRow(
+        'limit',
+        '10',
+        'Items per page',
+      ),
+    );
+  }
+
+  if (this.headers.length === 0) {
+    this.headers.push(
+      this.createKeyValueRow(
+        'Accept',
+        'application/json',
+        'Expected response type',
+      ),
+    );
+  }
+}
+
+resetRequest() {
+  this.requestService.resetRequest();
+
+  this.restoreForm(this.requestService.config());
+
+  this.activeTab.set('params');
+}
 }

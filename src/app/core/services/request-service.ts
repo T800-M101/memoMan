@@ -1,30 +1,141 @@
-import { computed, Injectable, signal } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
+import { Injectable, signal } from '@angular/core';
+import { RequestConfig } from '../interfaces/request-config.interface';
 
-@Injectable({ providedIn: 'root' })
+@Injectable({
+  providedIn: 'root',
+})
 export class RequestService {
- // centralized state
-  method = signal<string>('GET');
-  url = signal<string>('');
+  private readonly STORAGE_KEY = 'memoman_request_config';
 
-  // Signal to trigger execution
-  private _triggerSend = signal<number>(0);
+  private sendCounter = signal<number>(0);
 
-  // Function to update
-  updateUrl(url: string) { this.url.set(url); }
-  
-  updateMethod(method: string) { this.method.set(method); }
+  resetTrigger = signal(0);
 
-  // Sending trigger
-  triggerSend() { this._triggerSend.update(n => n + 1); }
+  isUrlInvalid(): boolean {
+    const url = this.requestConfig().url?.trim();
 
-  // We expose the signal so that the tabs can hear it.
-  sendRequested = this._triggerSend.asReadonly();
+    if (!url) {
+      return true;
+    }
 
-  isUrlInvalid = computed(() => {
-    const value = this.url();
-    return !value || !value.startsWith('http');
+    try {
+      new URL(url);
+
+      return false;
+    } catch {
+      return true;
+    }
+  }
+
+  private requestConfig = signal<RequestConfig>({
+    method: 'GET',
+    url: '',
+
+    params: [],
+
+    headers: [],
+
+    auth: {
+      type: 'bearer',
+      bearerToken: '',
+      basicUsername: '',
+      basicPassword: '',
+    },
+
+    body: {
+      type: 'json',
+      jsonContent: '',
+    },
   });
 
+  constructor() {
+    this.loadFromLocalStorage();
+  }
 
+  // ====================
+  // PUBLIC API
+  // ====================
+
+  config() {
+    return this.requestConfig();
+  }
+
+  sendRequested() {
+    return this.sendCounter();
+  }
+
+  triggerSend() {
+    this.sendCounter.update((count) => count + 1);
+  }
+
+  updateMethod(method: string) {
+    this.patchConfig({
+      method,
+    });
+  }
+
+  updateUrl(url: string) {
+    this.patchConfig({
+      url,
+    });
+  }
+
+  updateTabsConfig(data: Partial<RequestConfig>) {
+    this.patchConfig(data);
+  }
+
+  // ====================
+  // INTERNAL
+  // ====================
+
+  private patchConfig(partial: Partial<RequestConfig>) {
+    this.requestConfig.update((current) => {
+      const updated = {
+        ...current,
+        ...partial,
+      };
+
+      this.saveToLocalStorage(updated);
+
+      return updated;
+    });
+  }
+
+  private saveToLocalStorage(config: RequestConfig) {
+    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(config));
+  }
+
+  private loadFromLocalStorage() {
+    const saved = localStorage.getItem(this.STORAGE_KEY);
+
+    if (!saved) return;
+
+    try {
+      this.requestConfig.set(JSON.parse(saved));
+    } catch {
+      localStorage.removeItem(this.STORAGE_KEY);
+    }
+  }
+
+  resetRequest() {
+    this.requestConfig.set({
+      method: 'GET',
+      url: '',
+      params: [],
+      headers: [],
+      auth: {
+        type: 'bearer',
+        bearerToken: '',
+        basicUsername: '',
+        basicPassword: '',
+      },
+      body: {
+        type: 'json',
+        jsonContent: '',
+      },
+    });
+
+    // notify listeners
+    this.resetTrigger.update((v) => v + 1);
+  }
 }

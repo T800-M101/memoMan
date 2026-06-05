@@ -41,7 +41,6 @@ export class Sidebar {
   }
 
   handleImport() {
-    console.log('Import clicked');
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = '.json';
@@ -55,7 +54,6 @@ export class Sidebar {
   }
 
   handleExport() {
-    console.log('Export clicked');
     const data = JSON.stringify(this.collections(), null, 2);
     const blob = new Blob([data], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -68,6 +66,5 @@ export class Sidebar {
 
   handleSearch(event: Event) {
     const searchTerm = (event.target as HTMLInputElement).value;
-    console.log('Searching:', searchTerm);
   }
 }
