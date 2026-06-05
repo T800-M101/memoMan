@@ -337,25 +337,7 @@ export class RequestTabs implements OnInit {
     }
   }
 
-  private initializeDefaults() {
-  if (this.params.length === 0) {
-    this.params.push(
-      this.createKeyValueRow(
-        'page',
-        '1',
-        'Pagination page',
-      ),
-    );
-
-    this.params.push(
-      this.createKeyValueRow(
-        'limit',
-        '10',
-        'Items per page',
-      ),
-    );
-  }
-
+ private initializeDefaults() {
   if (this.headers.length === 0) {
     this.headers.push(
       this.createKeyValueRow(

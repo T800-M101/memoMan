@@ -20,8 +20,8 @@ export class RequestService {
 
     try {
       new URL(url);
-
       return false;
+      
     } catch {
       return true;
     }
