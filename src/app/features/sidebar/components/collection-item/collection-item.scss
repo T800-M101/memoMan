@@ -1,102 +1,49 @@
-.accordion-item {
+.collection-item {
   border: 1px solid var(--border-color-lighter);
-  border-radius: var(--radius-xl);
-  margin-bottom: var(--spacing-md);
+  border-radius: var(--radius-lg);
+  margin-bottom: 8px;
   overflow: hidden;
 
-  &:last-child {
-    margin-bottom: 0;
-  }
-}
+  .collection-header {
+    height: 32px;
+    padding: 0 10px;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    background: var(--bg-white);
+    transition: background 0.2s;
 
-.accordion-header {
-  margin: 0;
-}
+    &:hover {
+      background: var(--bg-light-alt);
+    }
 
-.accordion-button {
-  background-color: var(--bg-white);
-  padding: var(--spacing-lg) var(--spacing-xl);
-  font-weight: var(--font-weight-semibold);
-  color: var(--text-dark);
-  transition: var(--transition-fast);
+    .toggle-icon {
+      font-size: 0.7rem;
+      transition: transform 0.2s ease;
 
-  &:hover {
-    background-color: var(--bg-light-alt);
-  }
-
-  &:focus {
-    box-shadow: none;
-    border-color: transparent;
-  }
-
-  &::after {
-    background-size: 0.875rem;
-    transition: transform 0.2s ease;
-  }
-
-  &:not(.collapsed) {
-    background-color: var(--bg-white);
-    color: var(--color-primary);
-    box-shadow: none;
-
-    &::after {
-      transform: rotate(-180deg);
+      &.rotated {
+        transform: rotate(-90deg);
+      }
     }
   }
 
-  .fa-folder {
-    font-size: 1rem;
+  .requests-list {
+    border-top: 1px solid var(--border-color-lighter);
   }
 }
 
-.accordion-collapse {
-  transition: var(--transition-fast);
 
-  &.show {
-    border-top: 1px solid var(--border-color-lightest);
-  }
-}
+.requests-wrapper {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.3s ease-out;
+  overflow: hidden;
 
-.accordion-body {
-  padding: 0;
-}
-
-.list-group {
-  border-radius: 0;
-}
-
-.list-group-flush {
-  .list-group-item {
-    border-left: none;
-    border-right: none;
-    border-bottom: 1px solid var(--border-color-subtle);
-
-    &:last-child {
-      border-bottom: none;
-    }
-  }
-}
-
-// Badge for number of requests (optional)
-.badge {
-  background-color: var(--badge-bg);
-  color: var(--badge-text);
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-medium);
-  padding: var(--spacing-xs) var(--spacing-sm);
-  border-radius: var(--radius-pill);
-  margin-left: var(--spacing-sm);
-}
-
-// Hover animation for the accordion-button
-.accordion-button {
-  position: relative;
-
-  i {
-    transition: transform 0.2s ease;
+  &.expanded {
+    grid-template-rows: 1fr;
   }
 
-  &:hover i {
-    transform: translateX(2px);
+  .requests-list {
+    min-height: 0;
   }
 }

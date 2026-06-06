@@ -10,18 +10,15 @@ import { ApiRequest } from '../../../../shared/interfaces/api-request.interface'
 })
 export class CollectionItem {
   title = input<string>('');
-  icon = input<string>('folder');
+  icon = input<string>('');
   requests = input<ApiRequest[]>([]);
-  isOpen = signal<boolean>(true);
+  isExpanded = signal(true);
 
-  accordionId = computed(() => this.title().replace(/\s/g, '') + 'Accordion');
-  dataBsTarget = computed(() => '#' + this.accordionId());
+  toggleExpand() {
+    this.isExpanded.update((val) => !val);
+  }
 
   handleRequestClick(request: ApiRequest) {
     console.log('Request clicked:', request);
-  }
-
-  toggleOpen() {
-    this.isOpen.update((state) => !state);
   }
 }

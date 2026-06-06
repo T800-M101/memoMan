@@ -3,7 +3,7 @@
     <!-- Action Buttons Row -->
     <div class="d-flex gap-2 mb-4">
       <!-- New Request Button (más pequeño) -->
-      <button class="btn btn-primary new-request-btn" (click)="handleNewRequest()">
+      <button class="btn btn-primary new-request-btn" (click)="toggleCreateMode()">
         <i class="fas fa-plus me-1"></i> New
       </button>
 
@@ -13,6 +13,19 @@
       </button>
 
     </div>
+
+    @if (isCreating()) {
+      <div class="input-group mb-3 animate__animated animate__fadeIn">
+        <input [(ngModel)]="newCollectionName"
+               (keyup.enter)="saveNewCollection()"
+               placeholder="Nombre de la colección..."
+               class="form-control form-control-sm"
+               autofocus />
+        <button class="btn btn-outline-success" (click)="saveNewCollection()">
+          <i class="fas fa-check"></i>
+        </button>
+      </div>
+    }
 
     <!-- Search Field -->
     <div class="mb-4 position-relative">
@@ -28,7 +41,7 @@
 
     <!-- Collections -->
     <div class="accordion" id="collectionsAccordion">
-      @for (collection of collections(); track collection.title) {
+      @for (collection of collections(); track collection.id) {
       <app-collection-item
         [title]="collection.title"
         [icon]="collection.icon"

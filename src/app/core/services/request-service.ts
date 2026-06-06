@@ -8,16 +8,20 @@ import {
   ProxyResponse,
 } from '../interfaces/backend.response.interface';
 import { TabData } from '../interfaces/tab-data.interface';
-
-
+import {
+  ApiCollection,
+  ApiRequest,
+  HttpMethod,
+} from '../../shared/interfaces/api-request.interface';
 
 @Injectable({
   providedIn: 'root',
 })
 export class RequestService {
+  collections = signal<ApiCollection[]>([]);
   tabs = signal<TabData[]>([]);
   activeTabId = signal<string>('');
-  activeTab = computed(() => this.tabs().find(t => t.id === this.activeTabId()));
+  activeTab = computed(() => this.tabs().find((t) => t.id === this.activeTabId()));
 
   private readonly STORAGE_KEY = 'memoman_request_config';
   private http = inject(HttpClient);
@@ -31,11 +35,10 @@ export class RequestService {
   isLoading = signal(false);
   requestError = signal<string | null>(null);
 
-   constructor() {
+  constructor() {
     this.loadFromLocalStorage();
     if (this.tabs().length === 0) this.addTab();
   }
-
 
   isUrlInvalid(): boolean {
     let url = this.requestConfig().url?.trim();
@@ -78,8 +81,6 @@ export class RequestService {
     },
   });
 
-
-
   // ====================
   // PUBLIC API
   // ====================
@@ -111,6 +112,11 @@ export class RequestService {
     this.patchConfig({
       method,
     });
+
+    const activeId = this.activeTabId();
+    if (activeId) {
+      this.updateTabData(activeId, { method });
+    }
   }
 
   updateUrl(url: string) {
@@ -179,78 +185,74 @@ export class RequestService {
   }
 
   async executeRequest() {
-  const config = this.requestConfig();
+    const config = this.requestConfig();
 
-  if (this.isUrlInvalid()) {
-    this.requestError.set('Invalid URL');
-    return;
-  }
-
-  this.isLoading.set(true);
-  this.requestError.set(null);
-
-  const isLocal = this.isLocalUrl(config.url);
-
-  const payload: ProxyRequest = {
-    url: config.url,
-    method: config.method,
-    headers: this.formatHeaders(config.headers),
-    body:
-      config.method !== 'GET' && config.body?.jsonContent
-        ? JSON.parse(config.body.jsonContent)
-        : null,
-  };
-
-  try {
-    const result = isLocal
-      ? await this.executeDirectRequest(payload)
-      : await lastValueFrom(this.sendRequest(payload));
-
-    if (typeof result.body === 'string') {
-      try { result.body = JSON.parse(result.body); } catch {}
+    if (this.isUrlInvalid()) {
+      this.requestError.set('Invalid URL');
+      return;
     }
 
-    this.response.set(result);
-  } catch (err: any) {
-     console.error('status:', err?.status);
-  console.error('message:', err?.message);
-  console.error('error:', err?.error);
-  console.error('full:', JSON.stringify(err, null, 2));
-    this.requestError.set('Connection error');
-  } finally {
-    this.isLoading.set(false);
+    this.isLoading.set(true);
+    this.requestError.set(null);
+
+    const isLocal = this.isLocalUrl(config.url);
+
+    const payload: ProxyRequest = {
+      url: config.url,
+      method: config.method,
+      headers: this.formatHeaders(config.headers),
+      body:
+        config.method !== 'GET' && config.body?.jsonContent
+          ? JSON.parse(config.body.jsonContent)
+          : null,
+    };
+
+    try {
+      const result = isLocal
+        ? await this.executeDirectRequest(payload)
+        : await lastValueFrom(this.sendRequest(payload));
+
+      if (typeof result.body === 'string') {
+        try {
+          result.body = JSON.parse(result.body);
+        } catch {}
+      }
+
+      this.response.set(result);
+    } catch (err: any) {
+      this.requestError.set('Connection error');
+    } finally {
+      this.isLoading.set(false);
+    }
   }
-}
 
-private isLocalUrl(url: string): boolean {
-  return url.includes('localhost') || url.includes('127.0.0.1');
-}
+  private isLocalUrl(url: string): boolean {
+    return url.includes('localhost') || url.includes('127.0.0.1');
+  }
 
-private async executeDirectRequest(payload: ProxyRequest): Promise<BackendResponse> {
-  const start = Date.now();
+  private async executeDirectRequest(payload: ProxyRequest): Promise<BackendResponse> {
+    const start = Date.now();
 
-  const res = await lastValueFrom(
-    this.http.request<any>(payload.method, payload.url, {
-      headers: payload.headers,
-      body: payload.body ?? undefined,
-      observe: 'response',
-      responseType: 'json',
-    })
-  );
+    const res = await lastValueFrom(
+      this.http.request<any>(payload.method, payload.url, {
+        headers: payload.headers,
+        body: payload.body ?? undefined,
+        observe: 'response',
+        responseType: 'json',
+      }),
+    );
 
-  const duration = Date.now() - start;
+    const duration = Date.now() - start;
 
-  return {
-    status: res.status,
-    statusText: res.statusText ?? '',
-    headers: Object.fromEntries(
-      res.headers.keys().map(k => [k, res.headers.get(k) ?? ''])
-    ),
-    duration: `${duration}ms`,
-    body: res.body,
-    timestamp: new Date().toISOString(),
-  };
-}
+    return {
+      status: res.status,
+      statusText: res.statusText ?? '',
+      headers: Object.fromEntries(res.headers.keys().map((k) => [k, res.headers.get(k) ?? ''])),
+      duration: `${duration}ms`,
+      body: res.body,
+      timestamp: new Date().toISOString(),
+    };
+  }
 
   private buildBackendRequest(config: RequestConfig) {
     return {
@@ -283,14 +285,14 @@ private async executeDirectRequest(payload: ProxyRequest): Promise<BackendRespon
       body: { type: 'none', jsonContent: '{}' },
       response: null,
       isLoading: false,
-      requestError: null
+      requestError: null,
     };
-    this.tabs.update(t => [...t, newTab]);
+    this.tabs.update((t) => [...t, newTab]);
     this.activeTabId.set(newTab.id);
   }
 
   removeTab(id: string) {
-    this.tabs.update(t => t.filter(tab => tab.id !== id));
+    this.tabs.update((t) => t.filter((tab) => tab.id !== id));
     // If we delete the active tab, select the last available one
     if (this.activeTabId() === id && this.tabs().length > 0) {
       this.activeTabId.set(this.tabs()[this.tabs().length - 1].id);
@@ -298,6 +300,64 @@ private async executeDirectRequest(payload: ProxyRequest): Promise<BackendRespon
   }
 
   updateTabData(id: string, partialData: Partial<TabData>) {
-    this.tabs.update(tabs => tabs.map(t => t.id === id ? { ...t, ...partialData } : t));
+    this.tabs.update((tabs) => tabs.map((t) => (t.id === id ? { ...t, ...partialData } : t)));
+  }
+
+  saveRequestToCollection(tabId: string, name: string, collectionId: string) {
+    const currentTab = this.tabs().find((t) => t.id === tabId);
+    if (!currentTab) return;
+
+    const newRequest: ApiRequest = {
+      method: (currentTab.method.toUpperCase() as HttpMethod) || 'GET',
+      name: name,
+      url: currentTab.url,
+      params: this.mapKeyValueToRecord(currentTab.params),
+      headers: this.mapKeyValueToRecord(currentTab.headers),
+      body: currentTab.body?.jsonContent ? JSON.parse(currentTab.body.jsonContent) : null,
+      auth: {
+        type: currentTab.auth?.type || 'none',
+        token: currentTab.auth?.bearerToken,
+      },
+      response: currentTab.response,
+    };
+
+    this.collections.update((cols) => {
+      return cols.map((c) =>
+        c.id === collectionId ? { ...c, requests: [...c.requests, newRequest] } : c,
+      );
+    });
+
+    this.updateTabName(tabId, name);
+  }
+
+  // Helper to convert the table format [ {key: '...', value: '...'} ] to { key: value }
+  private mapKeyValueToRecord(items: any[]): Record<string, string> {
+    if (!Array.isArray(items)) return {};
+    return items.reduce(
+      (acc, item) => {
+        if (item.key) acc[item.key] = item.value;
+        return acc;
+      },
+      {} as Record<string, string>,
+    );
+  }
+
+  updateTabName(tabId: string, newName: string) {
+    this.tabs.update((tabs) =>
+      tabs.map((tab) => (tab.id === tabId ? { ...tab, name: newName } : tab)),
+    );
+  }
+
+  createNewCollection(title: string, id: string = crypto.randomUUID()) {
+    const newCollection: ApiCollection = {
+      id,
+      title,
+      icon: 'folder',
+      requests: [],
+      isExpanded: true,
+    };
+
+    this.collections.update((cols) => [...cols, newCollection]);
+    return id;
   }
 }

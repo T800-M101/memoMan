@@ -1,29 +1,66 @@
 <div class="tabs-container">
   @for (tab of tabs(); track tab.id) {
-    <div
-      class="tab-item"
-      [class.active]="activeTabId() === tab.id"
-      (click)="selectTab(tab.id)">
+  <div class="tab-item" [class.active]="activeTabId() === tab.id" (click)="selectTab(tab.id)">
 
-      <span class="tab-title">{{ tab.name }}</span>
+    <span class="tab-title">{{ tab.name }}</span>
 
-      <div class="tab-actions">
-        @if (activeTabId() === tab.id) {
-          <button class="save-btn" (click)="saveRequest(tab.id, $event)" title="Save Request">
-            <i class="fas fa-save"></i>
-          </button>
-        }
+    <div class="tab-actions">
+      @if (activeTabId() === tab.id) {
+      <button class="save-btn" (click)="saveRequest(tab.id, $event)" title="Save Request">
+        <i class="fas fa-save"></i>
+      </button>
+      }
 
-        @if (tabs().length > 1) {
-          <button class="close-btn" (click)="closeTab(tab.id, $event)">
-            <i class="fas fa-times"></i>
-          </button>
-        }
-      </div>
+      @if (tabs().length > 1) {
+      <button class="close-btn" (click)="closeTab(tab.id, $event)">
+        <i class="fas fa-times"></i>
+      </button>
+      }
     </div>
+  </div>
   }
 
   <button class="add-tab-btn" (click)="addTab()">
     <i class="fas fa-plus"></i>
   </button>
 </div>
+
+@if (isSaveModalOpen()) {
+<div class="modal-overlay">
+  <div class="modal-content">
+    <h5 class="mb-3">Save Request</h5>
+
+    <div class="mb-3">
+      <label class="form-label small">Request Name</label>
+      <input [(ngModel)]="requestName" placeholder="Enter request name" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label small">Select Collection</label>
+      <select [(ngModel)]="selectedCollectionId" class="form-select mb-3">
+        <option value="" disabled>Select a collection</option>
+
+        @for (col of collections(); track col.id) {
+        <option [value]="col.id">{{ col.title }}</option>
+        }
+
+        <option value="new" class="text-primary fw-bold border-top mt-1">
+          + Create new collection
+        </option>
+      </select>
+
+      @if (selectedCollectionId() === 'new') {
+      <input [(ngModel)]="newCollectionTitle" placeholder="Name of the new collection" class="form-control mb-3" />
+      }
+    </div>
+
+    <div class="actions mt-3 d-flex justify-content-end">
+      <button (click)="closeModal()" class="btn btn-secondary btn-sm">Cancel</button>
+      <button (click)="confirmSave()" class="btn btn-primary btn-sm ms-2"
+        [disabled]="!requestName() || !selectedCollectionId()">
+        Save
+      </button>
+    </div>
+  </div>
+</div>
+}

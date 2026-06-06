@@ -1,25 +1,26 @@
-<div class="accordion-item border rounded-3 mb-2">
-  <h2 class="accordion-header">
-    <button class="accordion-button py-3 bg-white fw-semibold"
-            type="button"
-            data-bs-toggle="collapse"
-            [attr.data-bs-target]="'#' + title().replace(/\s/g, '')">
-      <i class="fas fa-folder me-2 text-info"></i> {{ title() }}
-    </button>
-  </h2>
-  <div [id]="title().replace(/\s/g, '')"
-       class="accordion-collapse collapse"
-       [class.show]="isOpen()">
-    <div class="accordion-body p-0">
-      <div class="list-group list-group-flush">
-        @for (req of requests(); track req.name) {
-          <app-request-item
-            [method]="req.method"
-            [name]="req.name"
-            (onClick)="handleRequestClick(req)">
-          </app-request-item>
-        }
-      </div>
+<div class="collection-item">
+  <div class="collection-header" (click)="toggleExpand()">
+    <div class="d-flex align-items-center w-100">
+      <i class="fas fa-chevron-down toggle-icon me-2"
+         [class.rotated]="!isExpanded()"></i>
+
+      <i class="fas fa-folder me-2 text-info"></i>
+
+      <span class="fw-semibold text-truncate">{{ title() }}</span>
+
+      <span class="badge ms-auto">{{ requests().length }}</span>
+    </div>
+  </div>
+
+  <div class="requests-wrapper" [class.expanded]="isExpanded()">
+    <div class="requests-list">
+      @for (req of requests(); track req.name) {
+        <app-request-item
+          [method]="req.method"
+          [name]="req.name"
+          (onClick)="handleRequestClick(req)">
+        </app-request-item>
+      }
     </div>
   </div>
 </div>

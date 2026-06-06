@@ -1,43 +1,30 @@
-import { Component, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { CollectionItem } from './components/collection-item/collection-item';
-import { ApiCollection, ApiRequest } from '../../shared/interfaces/api-request.interface';
-
-
+import { RequestService } from '../../core/services/request-service';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-sidebar',
-  imports: [CollectionItem],
+  imports: [CollectionItem, FormsModule],
   templateUrl: './sidebar.html',
   styleUrl: './sidebar.scss',
 })
 export class Sidebar {
- collections = signal<ApiCollection[]>([
-  {
-    id: '1',
-    title: 'Users',
-    icon: 'folder',
-    requests: <ApiRequest[]>[
-      { method: 'GET', name: 'Get All Users' },
-      { method: 'POST', name: 'Create User' },
-      { method: 'PUT', name: 'Update User' },
-      { method: 'DELETE', name: 'Delete User' },
-    ],
-    isExpanded: true
-  },
-  {
-    id: '2',
-    title: 'Products',
-    icon: 'folder',
-    requests: <ApiRequest[]>[
-      { method: 'GET', name: 'Get All Products' },
-      { method: 'POST', name: 'Create Product' },
-    ],
-    isExpanded: false
-  },
-]);
+  private requestService = inject(RequestService);
+  collections = this.requestService.collections;
+  isCreating = signal(false);
+  newCollectionName = signal('');
 
-  handleNewRequest() {
-    console.log('New request clicked');
+  toggleCreateMode() {
+    this.isCreating.set(!this.isCreating());
+  }
+
+  saveNewCollection() {
+    if (this.newCollectionName().trim()) {
+      this.requestService.createNewCollection(this.newCollectionName());
+      this.newCollectionName.set('');
+      this.isCreating.set(false);
+    }
   }
 
   handleImport() {
