@@ -254,16 +254,16 @@ export class RequestService {
     };
   }
 
-  private buildBackendRequest(config: RequestConfig) {
-    return {
-      method: config.method,
-      headers: this.formatHeaders(config.headers),
-      body:
-        config.method !== 'GET' && config.body?.jsonContent
-          ? JSON.parse(config.body.jsonContent)
-          : null,
-    };
-  }
+  // private buildBackendRequest(config: RequestConfig) {
+  //   return {
+  //     method: config.method,
+  //     headers: this.formatHeaders(config.headers),
+  //     body:
+  //       config.method !== 'GET' && config.body?.jsonContent
+  //         ? JSON.parse(config.body.jsonContent)
+  //         : null,
+  //   };
+  // }
 
   private formatHeaders(headers: any[]) {
     const h: Record<string, string> = {};
@@ -359,5 +359,9 @@ export class RequestService {
 
     this.collections.update((cols) => [...cols, newCollection]);
     return id;
+  }
+
+  parseCurl(curl: string): Observable<any> {
+    return this.http.post('http://localhost:3001/parse-curl', { curl });
   }
 }

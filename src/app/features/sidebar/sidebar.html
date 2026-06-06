@@ -9,22 +9,19 @@
 
       <!-- Import Button -->
       <button class="btn btn-outline-secondary import-btn" (click)="handleImport()">
-        <i class="fas fa-upload me-1"></i> Import
+        <i class="fas fa-upload me-1"></i> Import cURL
       </button>
 
     </div>
 
     @if (isCreating()) {
-      <div class="input-group mb-3 animate__animated animate__fadeIn">
-        <input [(ngModel)]="newCollectionName"
-               (keyup.enter)="saveNewCollection()"
-               placeholder="Nombre de la colección..."
-               class="form-control form-control-sm"
-               autofocus />
-        <button class="btn btn-outline-success" (click)="saveNewCollection()">
-          <i class="fas fa-check"></i>
-        </button>
-      </div>
+    <div class="input-group mb-3 animate__animated animate__fadeIn">
+      <input [(ngModel)]="newCollectionName" (keyup.enter)="saveNewCollection()" placeholder="Nombre de la colección..."
+        class="form-control form-control-sm" autofocus />
+      <button class="btn btn-outline-success" (click)="saveNewCollection()">
+        <i class="fas fa-check"></i>
+      </button>
+    </div>
     }
 
     <!-- Search Field -->
@@ -42,10 +39,7 @@
     <!-- Collections -->
     <div class="accordion" id="collectionsAccordion">
       @for (collection of collections(); track collection.id) {
-      <app-collection-item
-        [title]="collection.title"
-        [icon]="collection.icon"
-        [requests]="collection.requests">
+      <app-collection-item [title]="collection.title" [icon]="collection.icon" [requests]="collection.requests">
       </app-collection-item>
       }
     </div>
@@ -53,22 +47,43 @@
 </div>
 
 @if (isImportModalOpen()) {
-  <div class="modal-overlay">
-    <div class="modal-content">
-      <h5>Import cURL</h5>
-      <textarea [(ngModel)]="curlInput" class="form-control mb-3" rows="5" placeholder="Paste cURL here..."></textarea>
+<div class="modal-overlay">
+  <div class="modal-content">
+    <h5>Import cURL</h5>
+    <textarea
+    [(ngModel)]="curlInput"
+    class="form-control"
+    [class.is-invalid]="isCurlInvalid() || errorMessage()"
+    rows="5"
+    placeholder="Paste cURL here...">
+  </textarea>
 
-      <select [(ngModel)]="selectedCollectionId" class="form-select mb-3">
-        <option value="" disabled>Selecciona una colección</option>
-        @for (col of collections(); track col.id) {
-          <option [value]="col.id">{{ col.title }}</option>
-        }
-      </select>
+  @if (errorMessage()) {
+    <div class="text-danger small mt-2 fw-bold">
+      <i class="fas fa-exclamation-circle me-1"></i>
+      {{ errorMessage() }}
+    </div>
+  }
 
-      <div class="d-flex justify-content-end gap-2">
-        <button class="btn btn-secondary" (click)="isImportModalOpen.set(false)">Cancel</button>
-        <button class="btn btn-primary" (click)="confirmImport()">Import & Save</button>
-      </div>
+    <button
+      type="button"
+      class="btn btn-sm btn-outline-danger"
+      (click)="clearCurl()"
+      [disabled]="!curlInput()">
+      <i class="fas fa-trash-alt me-1"></i> Clear
+    </button>
+
+    <select [(ngModel)]="selectedCollectionId" class="form-select mb-3">
+      <option value="" disabled>Select a collection</option>
+      @for (col of collections(); track col.id) {
+      <option [value]="col.id">{{ col.title }}</option>
+      }
+    </select>
+
+    <div class="d-flex justify-content-end gap-2">
+      <button class="btn btn-secondary" (click)="isImportModalOpen.set(false)">Cancel</button>
+      <button class="btn btn-primary" (click)="confirmImport()">Import & Save</button>
     </div>
   </div>
+</div>
 }
