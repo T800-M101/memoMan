@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { NgxJsonViewerModule } from 'ngx-json-viewer';
 import { RequestService } from '../../core/services/request-service';
 import { CommonModule } from '@angular/common';
@@ -15,4 +15,21 @@ export class ResponseSection {
   response = this.requestService.response;
   isLoading = this.requestService.isLoading;
   error = this.requestService.requestError;
+
+  isCopied = signal(false);
+
+  async copyToClipboard() {
+    const body = this.response()?.body;
+    if (!body) return;
+
+    const textToCopy = JSON.stringify(body, null, 2);
+
+    navigator.clipboard.writeText(textToCopy).then(() => {
+      this.isCopied.set(true);
+
+      setTimeout(() => this.isCopied.set(false), 2000);
+    }).catch(err => {
+      console.error('Error al copiar:', err);
+    });
+  }
 }

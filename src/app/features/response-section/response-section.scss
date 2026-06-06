@@ -119,8 +119,17 @@
   }
 }
 
+
+
 .btn-outline-secondary {
+  transition: all 0.2s ease;
   border-radius: 8px;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.75rem;
+
+  i {
+    font-size: 0.7rem;
+  }
 
   &:hover:not(:disabled) {
     background: #00bcd4;

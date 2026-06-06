@@ -23,9 +23,7 @@ export class RequestTabs implements OnInit {
 
   activeTab = signal<string>('params');
 
-  isCopying = signal<boolean>(false);
-
-  isJsonCopying = signal<boolean>(false);
+  isCopied = signal(false);
 
   form: FormGroup = this.fb.group({
     params: this.fb.array([]),
@@ -265,10 +263,10 @@ export class RequestTabs implements OnInit {
 
       await navigator.clipboard.writeText(this.generateCurlCommand(config.method, config.url));
 
-      this.isCopying.set(true);
+      this.isCopied.set(true);
 
       setTimeout(() => {
-        this.isCopying.set(false);
+        this.isCopied.set(false);
       }, 2000);
     } catch (err) {
       console.error('Clipboard API not available:', err);
@@ -317,24 +315,6 @@ export class RequestTabs implements OnInit {
 
   clearJson() {
     this.body.get('jsonContent')?.setValue('');
-  }
-
-  async copyJsonToClipboard() {
-    const content = this.body.get('jsonContent')?.value;
-
-    if (!content) return;
-
-    try {
-      await navigator.clipboard.writeText(content);
-
-      this.isJsonCopying.set(true);
-
-      setTimeout(() => {
-        this.isJsonCopying.set(false);
-      }, 2000);
-    } catch (err) {
-      console.error('Failed to copy:', err);
-    }
   }
 
  private initializeDefaults() {

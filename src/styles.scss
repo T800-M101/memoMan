@@ -44,3 +44,14 @@ pre, code, .font-monospace {
   overflow: hidden;
   min-height: 0;
 }
+
+.btn-sm:focus,
+.btn-sm.focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.btn-sm:active {
+  box-shadow: none !important;
+  transform: translateY(0) !important;
+}

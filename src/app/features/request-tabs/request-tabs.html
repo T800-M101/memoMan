@@ -6,11 +6,13 @@
     <!-- Copy cURL -->
     <button
       type="button"
-      class="btn btn-sm btn-outline-secondary"
+      class="btn btn-sm"
+      [class.btn-outline-secondary]="!isCopied()"
+      [class.btn-success]="isCopied()"
       (click)="copyCurlToClipboard()"
-      [disabled]="isCopying()">
-      <i class="fas fa-terminal me-1"></i>
-      {{ isCopying() ? 'Copied!' : 'Copy cURL' }}
+      [disabled]="isCopied()">
+      <i class="fas me-1" [class.fa-terminal]="!isCopied()" [class.fa-check]="isCopied()"></i>
+      {{ isCopied() ? 'Copied!' : 'Copy cURL' }}
     </button>
 
     <!-- Reset Request -->
@@ -144,35 +146,31 @@
 
         <tbody formArrayName="headers">
 
-          @for (
-          header of headers.controls;
-          track $index
-          ) {
+          @for (header of headers.controls; track $index) {
+            <tr [formGroupName]="$index">
 
-          <tr [formGroupName]="$index">
+              <td>
+                <input type="text" formControlName="key" placeholder="Key" />
+              </td>
 
-            <td>
-              <input type="text" formControlName="key" placeholder="Key" />
-            </td>
+              <td>
+                <input type="text" formControlName="value" placeholder="Value" />
+              </td>
 
-            <td>
-              <input type="text" formControlName="value" placeholder="Value" />
-            </td>
+              <td>
+                <input type="text" formControlName="description" placeholder="Description" />
+              </td>
 
-            <td>
-              <input type="text" formControlName="description" placeholder="Description" />
-            </td>
+              <td>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-link text-danger"
+                  (click)="removeHeaderRow($index)">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </td>
 
-            <td>
-              <button
-                type="button"
-                class="btn btn-sm btn-link text-danger"
-                (click)="removeHeaderRow($index)">
-                <i class="fas fa-trash"></i>
-              </button>
-            </td>
-
-          </tr>
+            </tr>
           }
 
         </tbody>
@@ -274,14 +272,6 @@
                 (click)="formatJson()">
                 <i class="fas fa-magic me-1"></i>
                 Format
-              </button>
-
-              <button
-                type="button"
-                class="btn btn-sm json-toolbar-btn"
-                (click)="copyJsonToClipboard()">
-                <i class="fas" [class.fa-copy]="!isJsonCopying()" [class.fa-check]="isJsonCopying()"></i>
-                {{ isJsonCopying() ? 'Copied!' : 'Copy' }}
               </button>
 
               <button
