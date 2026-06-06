@@ -50,31 +50,26 @@
 <div class="modal-overlay">
   <div class="modal-content">
     <h5>Import cURL</h5>
-    <textarea
-    [(ngModel)]="curlInput"
-    class="form-control"
-    [class.is-invalid]="isCurlInvalid() || errorMessage()"
-    rows="5"
-    placeholder="Paste cURL here...">
+    <textarea [(ngModel)]="curlInput" class="form-control" [class.is-invalid]="isCurlInvalid() || errorMessage()"
+      rows="5" placeholder="Paste cURL here...">
   </textarea>
 
-  @if (errorMessage()) {
+    @if (errorMessage()) {
     <div class="text-danger small mt-2 fw-bold">
       <i class="fas fa-exclamation-circle me-1"></i>
       {{ errorMessage() }}
     </div>
-  }
+    }
 
-    <button
-      type="button"
-      class="btn btn-sm btn-outline-danger"
-      (click)="clearCurl()"
-      [disabled]="!curlInput()">
+    <button type="button" class="btn btn-sm btn-outline-danger" (click)="clearCurl()" [disabled]="!curlInput()">
       <i class="fas fa-trash-alt me-1"></i> Clear
     </button>
 
     <select [(ngModel)]="selectedCollectionId" class="form-select mb-3">
       <option value="" disabled>Select a collection</option>
+
+      <option value="new">+ Create New Collection</option>
+
       @for (col of collections(); track col.id) {
       <option [value]="col.id">{{ col.title }}</option>
       }

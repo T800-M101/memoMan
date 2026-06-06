@@ -47,14 +47,14 @@ export class TabNavigation {
 
     if (collectionId === 'new') {
       const newId = crypto.randomUUID();
-      const title = this.newCollectionTitle() || 'Nueva Colección';
+      const title = this.newCollectionTitle() || 'New Collection';
       this.requestService.createNewCollection(title, newId);
       collectionId = newId;
     }
 
     if (collectionId === 'new') {
       const newId = crypto.randomUUID();
-      this.requestService.createNewCollection('Nueva Colección', newId);
+      this.requestService.createNewCollection('New Collection', newId);
       collectionId = newId;
     }
 

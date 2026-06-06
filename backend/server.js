@@ -63,6 +63,22 @@ app.post('/proxy', async (req, res) => {
   }
 });
 
+// app.post('/parse-curl', async (req, res) => {
+//   const { curl } = req.body;
+
+//   if (!curl) {
+//     return res.status(400).json({ error: 'Missing curl field in body' });
+//   }
+
+//   try {
+//     const { toJsonObject } = await import('curlconverter');
+//     const parsed = toJsonObject(curl);
+//     res.json(parsed);
+//   } catch (err) {
+//     res.status(400).json({ error: `Invalid cURL command: ${err.message}` });
+//   }
+// });
+
 app.post('/parse-curl', async (req, res) => {
   const { curl } = req.body;
 
@@ -71,9 +87,18 @@ app.post('/parse-curl', async (req, res) => {
   }
 
   try {
+    // Importación dinámica como tenías
     const { toJsonObject } = await import('curlconverter');
-    const parsed = toJsonObject(curl);
-    res.json(parsed);
+
+    // Limpieza crítica para que el parser no falle por saltos de línea
+    const cleanCurl = curl.replace(/\\\n/g, ' ').replace(/\s+/g, ' ');
+
+    const rawParsed = toJsonObject(cleanCurl);
+
+    // Transformamos el resultado crudo al formato que tu frontend entiende
+    const formattedResponse = transformToFrontendFormat(rawParsed);
+
+    res.json(formattedResponse);
   } catch (err) {
     res.status(400).json({ error: `Invalid cURL command: ${err.message}` });
   }
@@ -117,3 +142,36 @@ process.on('SIGTERM', () => {
     console.log('HTTP server closed');
   });
 });
+
+
+function transformToFrontendFormat(data) {
+  // Manejo de Headers (curlconverter los devuelve como un objeto plano, está bien)
+  const headers = data.headers || {};
+
+  // Manejo del Body (si viene como string JSON, lo parseamos a objeto)
+  let bodyContent = data.data || '';
+  try {
+    if (typeof bodyContent === 'string') {
+      bodyContent = JSON.parse(bodyContent);
+    }
+  } catch { /* si no es JSON, lo dejamos como string o vacío */ }
+
+  return {
+    method: data.method?.toUpperCase() || 'GET',
+    name: 'Imported Request',
+    url: data.url || '',
+    params: {}, // curlconverter suele ponerlos en la URL, requeriría lógica extra para extraerlos
+    headers: Object.entries(headers).map(([key, value]) => ({ key, value, description: '' })),
+    body: {
+      type: bodyContent ? 'json' : 'none',
+      jsonContent: typeof bodyContent === 'object' ? JSON.stringify(bodyContent, null, 2) : bodyContent
+    },
+    auth: {
+      type: data.auth ? 'basic' : (headers['authorization'] ? 'bearer' : 'none'),
+      bearerToken: headers['authorization']?.replace('Bearer ', '') || '',
+      basicUsername: data.auth?.username || '',
+      basicPassword: data.auth?.password || ''
+    },
+    response: null
+  };
+}

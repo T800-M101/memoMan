@@ -41,19 +41,20 @@ export class Sidebar {
   }
 
   async confirmImport() {
-    this.errorMessage.set(null); // Limpiamos errores previos
+    this.errorMessage.set(null);
     const curlValue = this.curlInput().trim();
-    console.log('VALUE:', curlValue);
 
     if (!curlValue || this.isCurlInvalid()) {
       this.errorMessage.set('Please paste a valid cURL command starting with "curl".');
       return;
     }
 
-    if (!this.selectedCollectionId()) {
-      this.errorMessage.set('Please select a collection.');
-      return;
-    }
+    let collectionId = this.selectedCollectionId();
+
+  if (!collectionId) {
+    this.errorMessage.set('Please select a collection.');
+    return;
+  }
 
     try {
       const parsed = await lastValueFrom(this.requestService.parseCurl(curlValue));
@@ -63,23 +64,30 @@ export class Sidebar {
         return;
       }
 
-      // const newTabId = Date.now().toString();
+      if (collectionId === 'new') {
+      const newId = crypto.randomUUID();
+      // Opcional: puedes usar un nombre por defecto o capturarlo de un input extra si tuvieras
+      const title = 'Imported Collection';
+      this.requestService.createNewCollection(title, newId);
+      collectionId = newId;
+    }
 
-      // this.requestService.tabs.update(t => [...t, {
-      //   id: newTabId,
-      //   name: 'Imported Request',
-      //   url: parsed.url,
-      //   method: parsed.method ?? 'GET',
-      //   params: [],
-      //   headers: parsed.headers ?? [],
-      //   auth: { type: 'none' },
-      //   body: parsed.body ?? { type: 'none', jsonContent: '{}' },
-      //   response: null,
-      //   isLoading: false,
-      //   requestError: null
-      // }]);
+    const newTabId = Date.now().toString();
+    this.requestService.tabs.update(t => [...t, {
+      id: newTabId,
+      name: parsed.name || 'Imported Request',
+      url: parsed.url,
+      method: parsed.method ?? 'GET',
+      params: [],
+      headers: parsed.headers ?? [],
+      auth: parsed.auth ?? { type: 'none' },
+      body: parsed.body ?? { type: 'none', jsonContent: '{}' },
+      response: null,
+      isLoading: false,
+      requestError: null
+    }]);
 
-      // this.requestService.saveRequestToCollection(newTabId, 'Imported Request', this.selectedCollectionId());
+    this.requestService.saveRequestToCollection(newTabId, parsed.name || 'Imported Request', collectionId);
 
       this.isImportModalOpen.set(false);
       this.curlInput.set('');

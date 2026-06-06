@@ -321,6 +321,8 @@ export class RequestService {
       response: currentTab.response,
     };
 
+    console.log('NEW',newRequest)
+
     this.collections.update((cols) => {
       return cols.map((c) =>
         c.id === collectionId ? { ...c, requests: [...c.requests, newRequest] } : c,
@@ -364,4 +366,6 @@ export class RequestService {
   parseCurl(curl: string): Observable<any> {
     return this.http.post('http://localhost:3001/parse-curl', { curl });
   }
+
+  
 }
