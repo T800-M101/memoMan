@@ -1,18 +1,27 @@
-.nav-tabs .nav-link {
-  color: var(--text-secondary);
-  font-weight: var(--font-weight-medium);
-  border: none;
-  border-bottom: 2px solid transparent;
+.nav-tabs {
+  display: flex;
+  width: 100%;
+  border-bottom: 1px solid var(--border-color-light);
 
-  &:hover {
-    color: var(--color-primary);
-    border-bottom-color: var(--color-primary);
-  }
+  .nav-item {
+    flex: 1;
+    text-align: center;
 
-  &.active {
-    color: var(--color-primary);
-    background: transparent;
-    border-bottom: 2px solid var(--color-primary);
+    .nav-link {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      border: none;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s;
+
+      &:hover {
+        background: var(--bg-light);
+        border-bottom: 2px solid var(--color-primary);
+      }
+    }
   }
 }
 
