@@ -15,6 +15,10 @@ export class Sidebar {
   isCreating = signal(false);
   newCollectionName = signal('');
 
+  isImportModalOpen = signal(false);
+  curlInput = signal('');
+  selectedCollectionId = signal<string>('');
+
   toggleCreateMode() {
     this.isCreating.set(!this.isCreating());
   }
@@ -28,16 +32,11 @@ export class Sidebar {
   }
 
   handleImport() {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.json';
-    input.onchange = (event) => {
-      const file = (event.target as HTMLInputElement).files?.[0];
-      if (file) {
-        console.log('Importing file:', file.name);
-      }
-    };
-    input.click();
+    this.isImportModalOpen.set(true);
+  }
+
+  async confirmImport() {
+
   }
 
   handleExport() {

@@ -310,7 +310,7 @@ export class RequestService {
     const newRequest: ApiRequest = {
       method: (currentTab.method.toUpperCase() as HttpMethod) || 'GET',
       name: name,
-      url: currentTab.url,
+      url: currentTab.url ?? '',
       params: this.mapKeyValueToRecord(currentTab.params),
       headers: this.mapKeyValueToRecord(currentTab.headers),
       body: currentTab.body?.jsonContent ? JSON.parse(currentTab.body.jsonContent) : null,

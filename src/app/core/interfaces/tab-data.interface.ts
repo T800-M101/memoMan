@@ -1,7 +1,7 @@
 export interface TabData {
   id: string;
   name: string;
-  url: string;
+  url: string | null;
   method: string;
   params: any[];
   headers: any[];

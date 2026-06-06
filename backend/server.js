@@ -1,6 +1,7 @@
-const express = require('express');
-const cors = require('cors');
-const axios = require('axios');
+import express from 'express';
+import cors from 'cors';
+import axios from 'axios';
+
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -59,6 +60,22 @@ app.post('/proxy', async (req, res) => {
       error: err.message,
       timestamp: new Date().toISOString()
     });
+  }
+});
+
+app.post('/parse-curl', async (req, res) => {
+  const { curl } = req.body;
+
+  if (!curl) {
+    return res.status(400).json({ error: 'Missing curl field in body' });
+  }
+
+  try {
+    const { toJsonObject } = await import('curlconverter');
+    const parsed = toJsonObject(curl);
+    res.json(parsed);
+  } catch (err) {
+    res.status(400).json({ error: `Invalid cURL command: ${err.message}` });
   }
 });
 

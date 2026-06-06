@@ -107,3 +107,50 @@
   .method-put { color: var(--method-put); }
   .method-delete { color: var(--method-delete); }
 }
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  backdrop-filter: blur(2px);
+
+  .modal-content {
+    background: white;
+    padding: 24px;
+    border-radius: 12px;
+    width: 450px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+
+    h5 {
+      margin: 0;
+      font-weight: 600;
+      color: var(--text-dark);
+    }
+
+    textarea {
+      font-family: monospace;
+      font-size: 0.85rem;
+      resize: vertical;
+      border: 1px solid var(--border-color);
+
+      &:focus {
+        border-color: var(--color-primary);
+        box-shadow: 0 0 0 2px var(--color-primary-light);
+      }
+    }
+
+    .form-select {
+      cursor: pointer;
+    }
+  }
+}
