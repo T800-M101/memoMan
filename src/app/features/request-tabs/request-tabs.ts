@@ -255,7 +255,7 @@ export class RequestTabs implements OnInit {
 
   async copyCurlToClipboard() {
     if (this.requestService.isUrlInvalid()) {
-      console.warn('URL inválida');
+      console.warn('Invalid URL');
 
       return;
     }

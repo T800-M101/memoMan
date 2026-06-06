@@ -22,7 +22,7 @@ export class RequestService {
   private readonly STORAGE_KEY = 'memoman_request_config';
   private http = inject(HttpClient);
 
-  private proxyUrl = 'http://localhost:3000/proxy';
+  private proxyUrl = 'http://localhost:3001/proxy';
 
   private sendCounter = signal<number>(0);
   resetTrigger = signal(0);
@@ -179,43 +179,78 @@ export class RequestService {
   }
 
   async executeRequest() {
-    const backendUrl = 'http://localhost:3000/proxy';
-    const target = this.requestConfig().url;
-    console.log('Haciendo fetch a:', `${backendUrl}?url=${encodeURIComponent(target)}`);
+  const config = this.requestConfig();
 
-    const config = this.requestConfig();
-
-    if (this.isUrlInvalid()) {
-      this.requestError.set('URL inválida');
-      return;
-    }
-
-    this.isLoading.set(true);
-
-    const payload: ProxyRequest = {
-      url: config.url,
-      method: config.method,
-      headers: this.formatHeaders(config.headers),
-      body:
-        config.method !== 'GET' && config.body?.jsonContent
-          ? JSON.parse(config.body.jsonContent)
-          : null,
-    };
-
-    try {
-      const result = await lastValueFrom(this.sendRequest(payload));
-
-      if (typeof result.body === 'string') {
-        result.body = JSON.parse(result.body);
-      }
-
-      this.response.set(result);
-    } catch (err) {
-      this.requestError.set('Error al conectar con el proxy');
-    } finally {
-      this.isLoading.set(false);
-    }
+  if (this.isUrlInvalid()) {
+    this.requestError.set('Invalid URL');
+    return;
   }
+
+  this.isLoading.set(true);
+  this.requestError.set(null);
+
+  const isLocal = this.isLocalUrl(config.url);
+
+  const payload: ProxyRequest = {
+    url: config.url,
+    method: config.method,
+    headers: this.formatHeaders(config.headers),
+    body:
+      config.method !== 'GET' && config.body?.jsonContent
+        ? JSON.parse(config.body.jsonContent)
+        : null,
+  };
+
+  try {
+    const result = isLocal
+      ? await this.executeDirectRequest(payload)
+      : await lastValueFrom(this.sendRequest(payload));
+
+    if (typeof result.body === 'string') {
+      try { result.body = JSON.parse(result.body); } catch {}
+    }
+
+    this.response.set(result);
+  } catch (err: any) {
+     console.error('status:', err?.status);
+  console.error('message:', err?.message);
+  console.error('error:', err?.error);
+  console.error('full:', JSON.stringify(err, null, 2));
+    this.requestError.set('Connection error');
+  } finally {
+    this.isLoading.set(false);
+  }
+}
+
+private isLocalUrl(url: string): boolean {
+  return url.includes('localhost') || url.includes('127.0.0.1');
+}
+
+private async executeDirectRequest(payload: ProxyRequest): Promise<BackendResponse> {
+  const start = Date.now();
+
+  const res = await lastValueFrom(
+    this.http.request<any>(payload.method, payload.url, {
+      headers: payload.headers,
+      body: payload.body ?? undefined,
+      observe: 'response',
+      responseType: 'json',
+    })
+  );
+
+  const duration = Date.now() - start;
+
+  return {
+    status: res.status,
+    statusText: res.statusText ?? '',
+    headers: Object.fromEntries(
+      res.headers.keys().map(k => [k, res.headers.get(k) ?? ''])
+    ),
+    duration: `${duration}ms`,
+    body: res.body,
+    timestamp: new Date().toISOString(),
+  };
+}
 
   private buildBackendRequest(config: RequestConfig) {
     return {
@@ -256,7 +291,7 @@ export class RequestService {
 
   removeTab(id: string) {
     this.tabs.update(t => t.filter(tab => tab.id !== id));
-    // Si borramos la activa, seleccionar la última disponible
+    // If we delete the active tab, select the last available one
     if (this.activeTabId() === id && this.tabs().length > 0) {
       this.activeTabId.set(this.tabs()[this.tabs().length - 1].id);
     }

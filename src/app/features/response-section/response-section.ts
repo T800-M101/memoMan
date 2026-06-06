@@ -11,7 +11,7 @@ import { CommonModule } from '@angular/common';
 })
 export class ResponseSection {
   tabId = input.required<string>();
-  
+
   private requestService = inject(RequestService);
 
   response = this.requestService.response;
@@ -31,7 +31,7 @@ export class ResponseSection {
 
       setTimeout(() => this.isCopied.set(false), 2000);
     }).catch(err => {
-      console.error('Error al copiar:', err);
+      console.error('Error copying to clipboard:', err);
     });
   }
 }
