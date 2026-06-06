@@ -7,12 +7,12 @@
 }
 
 html, body {
-  font-family: 'Roboto', sans-serif;
+  font-family: var(--font-secondary);
   height: 100%;
 }
 
 body {
-  background: #f4f6f9;
+  background: var(--bg-body);
   height: 100vh;
   overflow: hidden;
 }

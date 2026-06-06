@@ -2,32 +2,32 @@
   width: 100%;
   transition: background 0.2s;
   cursor: pointer;
-  font-size: 0.9rem;
+  font-size: var(--font-size-lg);
   padding: 10px 12px;
   border: none;
   background: transparent;
 
   &:hover {
-    background: #e3f2fd;
+    background: var(--color-primary-light);
   }
 }
 
 .method-badge {
-  font-weight: 700;
-  font-size: 0.75rem;
-  min-width: 65px;
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-sm);
+  min-width: var(--width-method-badge);
 }
 
-.method-get { color: #00acc1; }
-.method-post { color: #43a047; }
-.method-put { color: #fb8c00; }
-.method-delete { color: #e53935; }
+.method-get { color: var(--method-get); }
+.method-post { color: var(--method-post); }
+.method-put { color: var(--method-put); }
+.method-delete { color: var(--method-delete); }
 
 .request-name {
-  font-weight: 500;
-  color: #2c3e50;
+  font-weight: var(--font-weight-medium);
+  color: var(--text-darker);
 }
 
 .request-description {
-  font-size: 0.7rem;
+  font-size: var(--font-size-xs);
 }

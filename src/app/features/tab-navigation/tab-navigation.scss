@@ -1,12 +1,12 @@
 .tabs-container {
   display: flex;
   align-items: center;
-  background: #f8f9fa;
-  border-bottom: 1px solid #dee2e6;
+  background: var(--bg-light);
+  border-bottom: 1px solid var(--border-color);
   padding: 0 10px;
   overflow-x: auto;
   gap: 2px;
-  height: 42px;
+  height: var(--height-lg);
   white-space: nowrap;
 
   .tab-item {
@@ -15,21 +15,21 @@
     gap: 8px;
     padding: 0 12px;
     height: 100%;
-    font-size: 0.75rem;
+    font-size: var(--font-size-sm);
     cursor: pointer;
-    color: #6c757d;
-    border-right: 1px solid #e9ecef;
-    transition: all 0.2s;
+    color: var(--text-secondary);
+    border-right: 1px solid var(--border-color-light);
+    transition: var(--transition-base);
 
     &.active {
-      background: white;
-      color: #00bcd4;
-      font-weight: 600;
-      border-bottom: 2px solid #00bcd4;
+      background: var(--bg-white);
+      color: var(--color-primary);
+      font-weight: var(--font-weight-semibold);
+      border-bottom: 2px solid var(--color-primary);
     }
 
     &:hover:not(.active) {
-      background: #eff1f3;
+      background: var(--bg-hover);
     }
 
     .tab-actions {
@@ -42,25 +42,25 @@
         background: transparent;
         border: none;
         padding: 4px;
-        font-size: 0.7rem;
-        color: #6c757d;
+        font-size: var(--font-size-xs);
+        color: var(--text-secondary);
         cursor: pointer;
-        border-radius: 4px;
-        opacity: 0.4;
-        transition: all 0.2s;
+        border-radius: var(--radius-sm);
+        opacity: var(--opacity-subtle);
+        transition: var(--transition-base);
 
         &:hover {
-          opacity: 1;
-          background: #e9ecef;
+          opacity: var(--opacity-hover);
+          background: var(--border-color-light);
         }
       }
 
       .save-btn:hover {
-        color: #00bcd4;
+        color: var(--color-primary);
       }
 
       .close-btn:hover {
-        color: #dc3545;
+        color: var(--color-danger);
       }
     }
   }
@@ -70,10 +70,10 @@
     background: transparent;
     padding: 0 12px;
     height: 100%;
-    color: #495057;
+    color: var(--text-tertiary);
 
     &:hover {
-      color: #00bcd4;
+      color: var(--color-primary);
     }
   }
 }

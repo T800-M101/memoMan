@@ -1,7 +1,7 @@
 .accordion-item {
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  margin-bottom: 0.75rem;
+  border: 1px solid var(--border-color-lighter);
+  border-radius: var(--radius-xl);
+  margin-bottom: var(--spacing-md);
   overflow: hidden;
 
   &:last-child {
@@ -14,14 +14,14 @@
 }
 
 .accordion-button {
-  background-color: white;
-  padding: 1rem 1.25rem;
-  font-weight: 600;
-  color: #1e293b;
-  transition: all 0.2s ease;
+  background-color: var(--bg-white);
+  padding: var(--spacing-lg) var(--spacing-xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-dark);
+  transition: var(--transition-fast);
 
   &:hover {
-    background-color: #f8fafc;
+    background-color: var(--bg-light-alt);
   }
 
   &:focus {
@@ -35,8 +35,8 @@
   }
 
   &:not(.collapsed) {
-    background-color: white;
-    color: #00bcd4;
+    background-color: var(--bg-white);
+    color: var(--color-primary);
     box-shadow: none;
 
     &::after {
@@ -50,10 +50,10 @@
 }
 
 .accordion-collapse {
-  transition: all 0.2s ease;
+  transition: var(--transition-fast);
 
   &.show {
-    border-top: 1px solid #eef2f4;
+    border-top: 1px solid var(--border-color-lightest);
   }
 }
 
@@ -69,7 +69,7 @@
   .list-group-item {
     border-left: none;
     border-right: none;
-    border-bottom: 1px solid #f1f5f9;
+    border-bottom: 1px solid var(--border-color-subtle);
 
     &:last-child {
       border-bottom: none;
@@ -79,13 +79,13 @@
 
 // Badge para número de requests (opcional)
 .badge {
-  background-color: #e2e8f0;
-  color: #475569;
-  font-size: 0.7rem;
-  font-weight: 500;
-  padding: 0.25rem 0.5rem;
-  border-radius: 20px;
-  margin-left: 0.5rem;
+  background-color: var(--badge-bg);
+  color: var(--badge-text);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-pill);
+  margin-left: var(--spacing-sm);
 }
 
 // Animación hover para el accordion-button

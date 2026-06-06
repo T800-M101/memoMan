@@ -1,28 +1,28 @@
 .topbar {
-  background: linear-gradient(135deg, #00acc1, #00bcd4);
-  height: 60px;
-  padding: 0 1.5rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: linear-gradient(135deg, var(--color-primary-dark), var(--color-primary));
+  height: var(--height-topbar);
+  padding: 0 var(--spacing-2xl);
+  box-shadow: var(--shadow-sm);
 
   .btn-link {
-    color: white;
+    color: var(--bg-white);
     text-decoration: none;
 
     &:hover {
       background: rgba(255, 255, 255, 0.1);
-      border-radius: 8px;
+      border-radius: var(--radius-md);
     }
   }
 
   .logo-text {
-    font-size: 1.25rem;
-    font-weight: 700;
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-bold);
     letter-spacing: 0.5px;
   }
 
   .avatar-btn {
-    width: 38px;
-    height: 38px;
+    width: var(--height-md);
+    height: var(--height-md);
     display: flex;
     align-items: center;
     justify-content: center;
