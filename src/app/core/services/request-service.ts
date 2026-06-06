@@ -1,4 +1,4 @@
-import { inject, Injectable, signal } from '@angular/core';
+import { computed, inject, Injectable, signal } from '@angular/core';
 import { RequestConfig } from '../interfaces/request-config.interface';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { lastValueFrom, Observable } from 'rxjs';
@@ -7,11 +7,18 @@ import {
   ProxyRequest,
   ProxyResponse,
 } from '../interfaces/backend.response.interface';
+import { TabData } from '../interfaces/tab-data.interface';
+
+
 
 @Injectable({
   providedIn: 'root',
 })
 export class RequestService {
+  tabs = signal<TabData[]>([]);
+  activeTabId = signal<string>('');
+  activeTab = computed(() => this.tabs().find(t => t.id === this.activeTabId()));
+
   private readonly STORAGE_KEY = 'memoman_request_config';
   private http = inject(HttpClient);
 
@@ -23,6 +30,12 @@ export class RequestService {
   response = signal<BackendResponse | null>(null);
   isLoading = signal(false);
   requestError = signal<string | null>(null);
+
+   constructor() {
+    this.loadFromLocalStorage();
+    if (this.tabs().length === 0) this.addTab();
+  }
+
 
   isUrlInvalid(): boolean {
     let url = this.requestConfig().url?.trim();
@@ -65,9 +78,7 @@ export class RequestService {
     },
   });
 
-  constructor() {
-    this.loadFromLocalStorage();
-  }
+
 
   // ====================
   // PUBLIC API
@@ -223,5 +234,35 @@ export class RequestService {
       if (header.key && header.value) h[header.key] = header.value;
     });
     return h;
+  }
+
+  addTab() {
+    const newTab: TabData = {
+      id: Date.now().toString(),
+      name: 'New request',
+      url: '',
+      method: 'GET',
+      params: [{ key: '', value: '', description: '' }],
+      headers: [{ key: '', value: '', description: '' }],
+      auth: { type: 'none' },
+      body: { type: 'none', jsonContent: '{}' },
+      response: null,
+      isLoading: false,
+      requestError: null
+    };
+    this.tabs.update(t => [...t, newTab]);
+    this.activeTabId.set(newTab.id);
+  }
+
+  removeTab(id: string) {
+    this.tabs.update(t => t.filter(tab => tab.id !== id));
+    // Si borramos la activa, seleccionar la última disponible
+    if (this.activeTabId() === id && this.tabs().length > 0) {
+      this.activeTabId.set(this.tabs()[this.tabs().length - 1].id);
+    }
+  }
+
+  updateTabData(id: string, partialData: Partial<TabData>) {
+    this.tabs.update(tabs => tabs.map(t => t.id === id ? { ...t, ...partialData } : t));
   }
 }

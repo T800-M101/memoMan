@@ -1,0 +1,29 @@
+<div class="tabs-container">
+  @for (tab of tabs(); track tab.id) {
+    <div
+      class="tab-item"
+      [class.active]="activeTabId() === tab.id"
+      (click)="selectTab(tab.id)">
+
+      <span class="tab-title">{{ tab.name }}</span>
+
+      <div class="tab-actions">
+        @if (activeTabId() === tab.id) {
+          <button class="save-btn" (click)="saveRequest(tab.id, $event)" title="Save Request">
+            <i class="fas fa-save"></i>
+          </button>
+        }
+
+        @if (tabs().length > 1) {
+          <button class="close-btn" (click)="closeTab(tab.id, $event)">
+            <i class="fas fa-times"></i>
+          </button>
+        }
+      </div>
+    </div>
+  }
+
+  <button class="add-tab-btn" (click)="addTab()">
+    <i class="fas fa-plus"></i>
+  </button>
+</div>

@@ -1,4 +1,4 @@
-import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, DestroyRef, inject, input, OnInit, signal } from '@angular/core';
 
 import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 
@@ -15,6 +15,8 @@ import { RequestService } from '../../core/services/request-service';
   styleUrls: ['./request-tabs.scss'],
 })
 export class RequestTabs implements OnInit {
+  tabId = input.required<string>();
+
   private fb = inject(FormBuilder);
 
   private requestService = inject(RequestService);

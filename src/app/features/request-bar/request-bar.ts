@@ -1,4 +1,4 @@
-import { Component, DestroyRef, effect, inject, OnInit, signal } from '@angular/core';
+import { Component, DestroyRef, effect, inject, input, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { RequestService } from '../../core/services/request-service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -10,6 +10,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
   styleUrl: './request-bar.scss',
 })
 export class RequestBar implements OnInit {
+  tabId = input.required<string>();
+  
   private fb = inject(FormBuilder);
 
   private destroyRef = inject(DestroyRef);

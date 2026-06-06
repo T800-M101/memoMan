@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, input, signal } from '@angular/core';
 import { NgxJsonViewerModule } from 'ngx-json-viewer';
 import { RequestService } from '../../core/services/request-service';
 import { CommonModule } from '@angular/common';
@@ -10,6 +10,8 @@ import { CommonModule } from '@angular/common';
   styleUrl: './response-section.scss',
 })
 export class ResponseSection {
+  tabId = input.required<string>();
+  
   private requestService = inject(RequestService);
 
   response = this.requestService.response;

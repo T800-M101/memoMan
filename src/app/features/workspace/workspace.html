@@ -1,13 +1,26 @@
 <main class="workspace">
-  <app-request-bar></app-request-bar>
-  <div class="d-flex justify-content-start mb-2">
-    <button class="btn-toggle-tabs" (click)="toggleTabs()">
-      <i class="fas" [class.fa-chevron-down]="isTabsCollapsed()" [class.fa-chevron-up]="!isTabsCollapsed()"></i>
-      {{ isTabsCollapsed() ? 'Show Details' : 'Collapse Details' }}
-    </button>
+  <app-tab-navigation></app-tab-navigation>
+
+  <div class="tab-content-area">
+    @for (tab of requestService.tabs(); track tab.id) {
+      <div [hidden]="activeTabId() !== tab.id">
+
+        <app-request-bar [tabId]="tab.id"></app-request-bar>
+
+        <div class="d-flex justify-content-start mb-2">
+          <button class="btn-toggle-tabs" (click)="toggleTabs()">
+            <i class="fas" [class.fa-chevron-down]="isTabsCollapsed()" [class.fa-chevron-up]="!isTabsCollapsed()"></i>
+            {{ isTabsCollapsed() ? 'Show Details' : 'Collapse Details' }}
+          </button>
+        </div>
+
+        <div class="tabs-wrapper" [class.hidden]="isTabsCollapsed()">
+          <app-request-tabs [tabId]="tab.id"></app-request-tabs>
+        </div>
+
+        <app-response-section [tabId]="tab.id" [class.expanded]="isTabsCollapsed()"></app-response-section>
+
+      </div>
+    }
   </div>
-  <div class="tabs-wrapper" [class.hidden]="isTabsCollapsed()">
-    <app-request-tabs></app-request-tabs>
-  </div>
-  <app-response-section [class.expanded]="isTabsCollapsed()"></app-response-section>
 </main>
