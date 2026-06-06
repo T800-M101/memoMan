@@ -1,10 +1,7 @@
 import { Component, computed, DestroyRef, inject, input, OnInit, signal } from '@angular/core';
-
 import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
-
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NgTemplateOutlet } from '@angular/common';
-
 import { RequestService } from '../../core/services/request-service';
 
 @Component({
@@ -19,7 +16,7 @@ export class RequestTabs implements OnInit {
 
   private fb = inject(FormBuilder);
 
-  private requestService = inject(RequestService);
+  requestService = inject(RequestService);
 
   private destroyRef = inject(DestroyRef);
 
@@ -319,23 +316,28 @@ export class RequestTabs implements OnInit {
     this.body.get('jsonContent')?.setValue('');
   }
 
- private initializeDefaults() {
-  if (this.headers.length === 0) {
-    this.headers.push(
-      this.createKeyValueRow(
-        'Accept',
-        'application/json',
-        'Expected response type',
-      ),
-    );
+  private initializeDefaults() {
+    if (this.headers.length === 0) {
+      this.headers.push(
+        this.createKeyValueRow('Accept', 'application/json', 'Expected response type'),
+      );
+    }
   }
-}
 
-resetRequest() {
-  this.requestService.resetRequest();
+  resetRequest() {
+    this.requestService.resetRequest();
 
-  this.restoreForm(this.requestService.config());
+    this.restoreForm(this.requestService.config());
 
-  this.activeTab.set('params');
-}
+    this.activeTab.set('params');
+  }
+
+  isFormEmpty(): boolean {
+    const formValue = this.form.getRawValue();
+    const hasParams = formValue.params.length > 0;
+    const hasHeaders = formValue.headers.length > 0;
+    const hasBody = !!formValue.body.jsonContent?.trim();
+
+    return !hasParams && !hasHeaders && !hasBody;
+  }
 }

@@ -10,7 +10,7 @@
       [class.btn-outline-secondary]="!isCopied()"
       [class.btn-success]="isCopied()"
       (click)="copyCurlToClipboard()"
-      [disabled]="isCopied()">
+      [disabled]="isCopied() || requestService.isUrlInvalid()">
       <i class="fas me-1" [class.fa-terminal]="!isCopied()" [class.fa-check]="isCopied()"></i>
       {{ isCopied() ? 'Copied!' : 'Copy cURL' }}
     </button>
@@ -19,7 +19,8 @@
     <button
       type="button"
       class="btn btn-sm btn-outline-danger"
-      (click)="resetRequest()">
+      (click)="resetRequest()"
+      [disabled]="isFormEmpty()">
       <i class="fas fa-rotate-left me-1"></i>
       Reset
     </button>
