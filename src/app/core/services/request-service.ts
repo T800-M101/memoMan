@@ -13,6 +13,7 @@ import {
   ApiRequest,
   HttpMethod,
 } from '../../shared/interfaces/api-request.interface';
+import { mapKeyValueToRecord } from '../helpers/mapper';
 
 @Injectable({
   providedIn: 'root',
@@ -35,39 +36,37 @@ export class RequestService {
   isLoading = signal(false);
   requestError = signal<string | null>(null);
 
-constructor() {
-  this.initCollections();
+  constructor() {
+    this.initCollections();
 
-  const savedTabs = localStorage.getItem('memoman_tabs');
-  if (savedTabs) {
-    try {
-      this.tabs.set(JSON.parse(savedTabs));
-    } catch (e) {
-      this.tabs.set([]);
+    const savedTabs = localStorage.getItem('memoman_tabs');
+    if (savedTabs) {
+      try {
+        this.tabs.set(JSON.parse(savedTabs));
+      } catch (e) {
+        this.tabs.set([]);
+      }
     }
+
+    if (this.tabs().length > 0) {
+      const savedActiveId = localStorage.getItem('memoman_active_tab_id');
+      const lastTabId = this.tabs()[this.tabs().length - 1].id;
+
+      const targetId = this.tabs().find((t) => t.id === savedActiveId) ? savedActiveId! : lastTabId;
+
+      this.activeTabId.set(targetId);
+    } else {
+      this.addTab();
+    }
+
+    effect(() => {
+      localStorage.setItem('memoman_tabs', JSON.stringify(this.tabs()));
+    });
+
+    effect(() => {
+      localStorage.setItem('memoman_active_tab_id', this.activeTabId());
+    });
   }
-
-  if (this.tabs().length > 0) {
-    const savedActiveId = localStorage.getItem('memoman_active_tab_id');
-    const lastTabId = this.tabs()[this.tabs().length - 1].id;
-
-    const targetId = this.tabs().find(t => t.id === savedActiveId)
-                     ? savedActiveId!
-                     : lastTabId;
-
-    this.activeTabId.set(targetId);
-  } else {
-    this.addTab();
-  }
-
-  effect(() => {
-    localStorage.setItem('memoman_tabs', JSON.stringify(this.tabs()));
-  });
-
-  effect(() => {
-    localStorage.setItem('memoman_active_tab_id', this.activeTabId());
-  });
-}
 
   private readonly SERVER_URL = 'http://localhost:3001';
 
@@ -234,7 +233,6 @@ constructor() {
       },
     });
 
-    // notify listeners
     this.resetTrigger.update((v) => v + 1);
   }
 
@@ -336,7 +334,7 @@ constructor() {
 
   removeTab(id: string) {
     this.tabs.update((t) => t.filter((tab) => tab.id !== id));
-    // If we delete the active tab, select the last available one
+
     if (this.activeTabId() === id && this.tabs().length > 0) {
       this.activeTabId.set(this.tabs()[this.tabs().length - 1].id);
     }
@@ -344,49 +342,6 @@ constructor() {
 
   updateTabData(id: string, partialData: Partial<TabData>) {
     this.tabs.update((tabs) => tabs.map((t) => (t.id === id ? { ...t, ...partialData } : t)));
-  }
-
-  saveRequestToCollection(tabId: string, name: string, collectionId: string) {
-    console.log('TABID', tabId)
-    const currentTab = this.tabs().find((t) => t.id === tabId);
-    console.log('CURRENT TAB', currentTab)
-    if (!currentTab) return;
-
-    const newRequest: ApiRequest = {
-      requestId: currentTab.id,
-      method: (currentTab.method.toUpperCase() as HttpMethod) || 'GET',
-      name: name,
-      url: currentTab.url ?? '',
-      params: this.mapKeyValueToRecord(currentTab.params),
-      headers: this.mapKeyValueToRecord(currentTab.headers),
-      body: currentTab.body?.jsonContent ? JSON.parse(currentTab.body.jsonContent) : null,
-      auth: {
-        type: currentTab.auth?.type || 'none',
-        token: currentTab.auth?.bearerToken,
-      },
-      response: currentTab.response,
-    };
-
-    this.collections.update((cols) => {
-      return cols.map((c) =>
-        c.collectionId === collectionId ? { ...c, requests: [...c.requests, newRequest] } : c,
-      );
-    });
-
-    this.updateTabName(tabId, name);
-    this.saveCollections(this.collections());
-  }
-
-  // Helper to convert the table format [ {key: '...', value: '...'} ] to { key: value }
-  private mapKeyValueToRecord(items: any[]): Record<string, string> {
-    if (!Array.isArray(items)) return {};
-    return items.reduce(
-      (acc, item) => {
-        if (item.key) acc[item.key] = item.value;
-        return acc;
-      },
-      {} as Record<string, string>,
-    );
   }
 
   updateTabName(tabId: string, newName: string) {
@@ -406,7 +361,7 @@ constructor() {
 
     this.collections.update((cols) => [...cols, newCollection]);
 
-  this.saveCollections(this.collections());
+    this.saveCollections(this.collections());
     return id;
   }
 
@@ -431,33 +386,87 @@ constructor() {
     });
   }
 
-openRequestFromCollection(req: ApiRequest) {
-  const existingTab = this.tabs().find(t => t.id === req.requestId);
+  openRequestFromCollection(req: ApiRequest) {
+    const existingTab = this.tabs().find((t) => t.id === req.requestId);
 
-  if (existingTab) {
-    this.setActiveTab(existingTab.id);
-    return;
+    if (existingTab) {
+      this.setActiveTab(existingTab.id);
+      return;
+    }
+
+    const newTab: TabData = {
+      id: req.requestId,
+      name: req.name,
+      url: req.url || null,
+      method: req.method || 'GET',
+      params: Array.isArray(req.params) ? req.params : [],
+      headers: Array.isArray(req.headers) ? req.headers : [],
+      auth: req.auth || { type: 'none' },
+      body: {
+        type: req.body?.type ?? 'none',
+        jsonContent: req.body?.jsonContent ?? '{}',
+      },
+      response: null,
+      isLoading: false,
+      requestError: null,
+    };
+
+    this.tabs.update((t) => [...t, newTab]);
+    this.setActiveTab(newTab.id);
   }
 
+  isTabDirty(tab: TabData): boolean {
+    const originalReq = this.collections()
+      .flatMap((c) => c.requests)
+      .find((r) => r.requestId === tab.id);
 
-  const newTab: TabData = {
-    id: req.requestId,
-    name: req.name,
-    url: req.url || null,
-    method: req.method || 'GET',
-    params: Array.isArray(req.params) ? req.params : [],
-    headers: Array.isArray(req.headers) ? req.headers : [],
-    auth: req.auth || { type: 'none' },
-    body: {
-      type: req.body?.type ?? 'none',
-      jsonContent: req.body?.jsonContent ?? '{}'
-    },
-    response: null,
-    isLoading: false,
-    requestError: null,
-  };
+    if (!originalReq) return false;
 
-  this.tabs.update(t => [...t, newTab]);
-  this.setActiveTab(newTab.id);
-}
+    const urlChanged = tab.url !== originalReq.url;
+    const methodChanged = tab.method !== originalReq.method;
+    const tabBody = JSON.stringify(JSON.parse(tab.body?.jsonContent || '{}'));
+    const origBody = JSON.stringify(originalReq.body || {});
+    const bodyChanged = tabBody !== origBody;
+
+    return urlChanged || methodChanged || bodyChanged;
+  }
+
+  saveRequestToCollection(tabId: string, name: string, collectionId: string) {
+    this.collections.update((cols) => {
+      return cols.map((c) => {
+        const requestsWithoutOld = c.requests.filter((r) => r.requestId !== tabId);
+
+        if (c.collectionId === collectionId) {
+          return {
+            ...c,
+            requests: [...requestsWithoutOld, this.mapTabToRequest(tabId, name)],
+          };
+        }
+
+        return { ...c, requests: requestsWithoutOld };
+      });
+    });
+
+    this.updateTabName(tabId, name);
+    this.saveCollections(this.collections());
+  }
+
+  private mapTabToRequest(tabId: string, name: string): ApiRequest {
+    const tab = this.tabs().find((t) => t.id === tabId)!;
+
+    return {
+      requestId: tab.id,
+      method: (tab.method.toUpperCase() as HttpMethod) || 'GET',
+      name: name,
+      url: tab.url || '',
+      params: mapKeyValueToRecord(tab.params),
+      headers: mapKeyValueToRecord(tab.headers),
+      body: tab.body?.jsonContent ? JSON.parse(tab.body.jsonContent) : null,
+      auth: {
+        type: tab.auth?.type || 'none',
+        token: tab.auth?.bearerToken || tab.auth?.basicUsername,
+      },
+      response: tab.response,
+    };
+  }
 }

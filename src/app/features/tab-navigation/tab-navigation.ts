@@ -35,31 +35,60 @@ export class TabNavigation {
   saveRequest(id: string, event: Event): void {
     event.stopPropagation();
     this.targetTabId.set(id);
+
+    const tab = this.tabs().find((t) => t.id === id);
+    if (tab) {
+      this.requestName.set(tab.name);
+
+      const collection = this.requestService
+        .collections()
+        .find((c) => c.requests.some((r) => r.requestId === id));
+      if (collection) {
+        this.selectedCollectionId.set(collection.collectionId);
+      }
+    }
+
     this.isSaveModalOpen.set(true);
   }
 
   confirmSave() {
-  const tabId = this.targetTabId();
-  const name = this.requestName();
-  let collectionId = this.selectedCollectionId();
+    const tabId = this.targetTabId();
+    const name = this.requestName();
+    let collectionId = this.selectedCollectionId();
 
-  if (!tabId || !name || !collectionId) return;
+    if (!tabId || !name || !collectionId) return;
 
-  if (collectionId === 'new') {
-    const newId = crypto.randomUUID()
-    const title = this.newCollectionTitle() || 'New Collection';
+    if (collectionId === 'new') {
+      const newId = crypto.randomUUID();
+      const title = this.newCollectionTitle() || 'New Collection';
 
-    this.requestService.createNewCollection(title, newId);
-    collectionId = newId;
+      this.requestService.createNewCollection(title, newId);
+      collectionId = newId;
+    }
+
+    this.requestService.saveRequestToCollection(tabId, name, collectionId);
+    this.closeModal();
   }
 
-  this.requestService.saveRequestToCollection(tabId, name, collectionId);
-
-  this.closeModal();
-}
-
-  closeModal() {
+  closeModal(): void {
     this.isSaveModalOpen.set(false);
     this.requestName.set('');
+  }
+
+  isNew(tabId: string): boolean {
+    const tab = this.tabs().find((t) => t.id === tabId);
+    if (!tab) return false;
+
+    const isInCollection = this.requestService
+      .collections()
+      .flatMap((c) => c.requests)
+      .some((r) => r.requestId === tab.id);
+
+    return !isInCollection;
+  }
+
+  isModified(tabId: string): boolean {
+    const tab = this.tabs().find((t) => t.id === tabId);
+    return tab ? this.requestService.isTabDirty(tab) : false;
   }
 }

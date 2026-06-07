@@ -21,7 +21,7 @@
         (focus)="onInputFocus()"
         (blur)="onInputBlur()"
         [placeholder]="isUrlFocused() && !url?.value ? 'https://api.example.com/users' : '' "
-        [class.border-danger]="requestService.isUrlInvalid()  && isTouched"/>
+        />
 
       <label
         for="urlInput"

@@ -1,26 +1,13 @@
 [
   {
-    "collectionId": "d9644017-8bfa-4fba-b3a3-144787d27797",
+    "collectionId": "76a99cd4-e9da-4d42-804c-84b109897fcc",
     "title": "Users",
     "icon": "folder",
     "requests": [
       {
-        "requestId": "c23f1b57-5f3f-40f6-9585-184746b03bb7",
+        "requestId": "a05a3ead-1780-46d8-a89f-ab4a34e3e1e4",
         "method": "GET",
         "name": "Create user",
-        "url": "",
-        "params": {},
-        "headers": {},
-        "body": {},
-        "auth": {
-          "type": "none"
-        },
-        "response": null
-      },
-      {
-        "requestId": "801ad407-2866-428d-a830-a08d151ce457",
-        "method": "POST",
-        "name": "get user",
         "url": "https://jsonplaceholder.typicode.com/posts/1",
         "params": {},
         "headers": {},
@@ -31,10 +18,36 @@
         "response": null
       },
       {
-        "requestId": "d06ef207-ce1d-457c-945a-af7559b8d4bc",
+        "requestId": "48b1bebb-1728-453a-b7c3-519fe97f5cb4",
         "method": "DELETE",
-        "name": "delete user",
-        "url": "https://httpbin.org/get",
+        "name": "Delete user",
+        "url": "https://jsonplaceholder.typicode.com/posts/1",
+        "params": {},
+        "headers": {},
+        "body": {},
+        "auth": {
+          "type": "none"
+        },
+        "response": null
+      },
+      {
+        "requestId": "fc320e33-8280-4d65-9a02-26ae90fecd88",
+        "method": "PUT",
+        "name": "Update user",
+        "url": "http://localhost:3000/health",
+        "params": {},
+        "headers": {},
+        "body": {},
+        "auth": {
+          "type": "none"
+        },
+        "response": null
+      },
+      {
+        "requestId": "e1a2bdbb-9f39-404e-9d93-2a0e647d4734",
+        "method": "POST",
+        "name": "New requasasasest",
+        "url": "",
         "params": {},
         "headers": {},
         "body": {},

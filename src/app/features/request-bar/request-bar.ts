@@ -18,8 +18,6 @@ export class RequestBar implements OnInit {
 
   requestService = inject(RequestService);
 
-  isTouched = false;
-
   isUrlFocused = signal<boolean>(false);
 
   requestForm = this.fb.group({
@@ -61,8 +59,6 @@ export class RequestBar implements OnInit {
   }
 
   onInputBlur() {
-    this.isTouched = true;
-
     this.isUrlFocused.set(false);
   }
 
