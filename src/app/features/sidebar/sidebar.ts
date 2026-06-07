@@ -43,18 +43,10 @@ export class Sidebar {
   async confirmImport() {
     this.errorMessage.set(null);
     const curlValue = this.curlInput().trim();
-
     if (!curlValue || this.isCurlInvalid()) {
       this.errorMessage.set('Please paste a valid cURL command starting with "curl".');
       return;
     }
-
-    let collectionId = this.selectedCollectionId();
-
-  if (!collectionId) {
-    this.errorMessage.set('Please select a collection.');
-    return;
-  }
 
     try {
       const parsed = await lastValueFrom(this.requestService.parseCurl(curlValue));
@@ -64,34 +56,29 @@ export class Sidebar {
         return;
       }
 
-      if (collectionId === 'new') {
-      const newId = crypto.randomUUID();
-      // Opcional: puedes usar un nombre por defecto o capturarlo de un input extra si tuvieras
-      const title = 'Imported Collection';
-      this.requestService.createNewCollection(title, newId);
-      collectionId = newId;
-    }
+      const newTabId = Date.now().toString();
 
-    const newTabId = Date.now().toString();
-    this.requestService.tabs.update(t => [...t, {
-      id: newTabId,
-      name: parsed.name || 'Imported Request',
-      url: parsed.url,
-      method: parsed.method ?? 'GET',
-      params: [],
-      headers: parsed.headers ?? [],
-      auth: parsed.auth ?? { type: 'none' },
-      body: parsed.body ?? { type: 'none', jsonContent: '{}' },
-      response: null,
-      isLoading: false,
-      requestError: null
-    }]);
+      const newTab = {
+        id: newTabId,
+        name: parsed.name || 'Imported Request',
+        url: parsed.url,
+        method: parsed.method ?? 'GET',
+        params: [],
+        headers: parsed.headers ?? [],
+        auth: parsed.auth ?? { type: 'none' },
+        body: parsed.body ?? { type: 'none', jsonContent: '{}' },
+        response: null,
+        isLoading: false,
+        requestError: null,
+      };
 
-    this.requestService.saveRequestToCollection(newTabId, parsed.name || 'Imported Request', collectionId);
+      this.requestService.tabs.update((t) => [...t, newTab]);
+
+      this.requestService.setActiveTab(newTab.id);
+      this.requestService.activeTabId.set(newTabId);
 
       this.isImportModalOpen.set(false);
       this.curlInput.set('');
-      this.selectedCollectionId.set('');
     } catch (e) {
       console.error('Error parsing cURL:', e);
       this.errorMessage.set('Could not parse the cURL command. Please check the syntax.');
@@ -106,4 +93,6 @@ export class Sidebar {
     this.curlInput.set('');
     this.errorMessage.set(null);
   }
+
+  
 }

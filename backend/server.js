@@ -1,10 +1,20 @@
 import express from 'express';
 import cors from 'cors';
 import axios from 'axios';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
 
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const DATA_FILE = path.join(__dirname, 'data', 'collections.json');
+
+if (!fs.existsSync(path.join(__dirname, 'data'))) {
+  fs.mkdirSync(path.join(__dirname, 'data'));
+}
 
 // Middleware
 app.use(cors());
@@ -63,22 +73,6 @@ app.post('/proxy', async (req, res) => {
   }
 });
 
-// app.post('/parse-curl', async (req, res) => {
-//   const { curl } = req.body;
-
-//   if (!curl) {
-//     return res.status(400).json({ error: 'Missing curl field in body' });
-//   }
-
-//   try {
-//     const { toJsonObject } = await import('curlconverter');
-//     const parsed = toJsonObject(curl);
-//     res.json(parsed);
-//   } catch (err) {
-//     res.status(400).json({ error: `Invalid cURL command: ${err.message}` });
-//   }
-// });
-
 app.post('/parse-curl', async (req, res) => {
   const { curl } = req.body;
 
@@ -124,6 +118,31 @@ app.get('/', (req, res) => {
       health: 'GET /health'
     }
   });
+});
+
+app.get('/api/collections', (req, res) => {
+  if (!fs.existsSync(DATA_FILE)) {
+    return res.json([]);
+  }
+
+  const data = fs.readFileSync(DATA_FILE, 'utf-8');
+
+  if (!data || data.trim().length === 0) {
+    return res.json([]);
+  }
+
+  try {
+    res.json(JSON.parse(data));
+  } catch (error) {
+    console.error("Error al parsear el JSON:", error);
+    res.status(500).json({ error: "Archivo JSON corrupto" });
+  }
+});
+
+app.post('/api/collections', (req, res) => {
+  const collections = req.body;
+  fs.writeFileSync(DATA_FILE, JSON.stringify(collections, null, 2));
+  res.status(200).json({ message: 'Saved successfully' });
 });
 
 // Start server with error handling

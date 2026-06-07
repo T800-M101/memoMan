@@ -1,4 +1,4 @@
-import { Component, computed, input, signal } from '@angular/core';
+import { Component, input, output, signal } from '@angular/core';
 import { RequestItem } from '../request-item/request-item';
 import { ApiRequest } from '../../../../shared/interfaces/api-request.interface';
 
@@ -14,11 +14,13 @@ export class CollectionItem {
   requests = input<ApiRequest[]>([]);
   isExpanded = signal(true);
 
+  requestSelected = output<ApiRequest>();
+
   toggleExpand() {
     this.isExpanded.update((val) => !val);
   }
 
   handleRequestClick(request: ApiRequest) {
-    console.log('Request clicked:', request);
+    this.requestSelected.emit(request);
   }
 }

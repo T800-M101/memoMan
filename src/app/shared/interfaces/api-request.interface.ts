@@ -1,6 +1,7 @@
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
 
 export interface ApiRequest {
+  requestId: string;
   method: HttpMethod;
   name: string;
   url?: string;
@@ -24,7 +25,7 @@ export interface ApiResponse {
 }
 
 export interface ApiCollection {
-  id: string;
+  collectionId: string;
   title: string;
   icon: string;
   requests: ApiRequest[];

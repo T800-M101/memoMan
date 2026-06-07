@@ -39,28 +39,24 @@ export class TabNavigation {
   }
 
   confirmSave() {
-    const tabId = this.targetTabId();
-    const name = this.requestName();
-    let collectionId = this.selectedCollectionId();
+  const tabId = this.targetTabId();
+  const name = this.requestName();
+  let collectionId = this.selectedCollectionId();
 
-    if (!tabId || !name || !collectionId) return;
+  if (!tabId || !name || !collectionId) return;
 
-    if (collectionId === 'new') {
-      const newId = crypto.randomUUID();
-      const title = this.newCollectionTitle() || 'New Collection';
-      this.requestService.createNewCollection(title, newId);
-      collectionId = newId;
-    }
+  if (collectionId === 'new') {
+    const newId = crypto.randomUUID()
+    const title = this.newCollectionTitle() || 'New Collection';
 
-    if (collectionId === 'new') {
-      const newId = crypto.randomUUID();
-      this.requestService.createNewCollection('New Collection', newId);
-      collectionId = newId;
-    }
-
-    this.requestService.saveRequestToCollection(tabId, name, collectionId);
-    this.closeModal();
+    this.requestService.createNewCollection(title, newId);
+    collectionId = newId;
   }
+
+  this.requestService.saveRequestToCollection(tabId, name, collectionId);
+
+  this.closeModal();
+}
 
   closeModal() {
     this.isSaveModalOpen.set(false);

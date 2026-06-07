@@ -1,0 +1,49 @@
+[
+  {
+    "collectionId": "d9644017-8bfa-4fba-b3a3-144787d27797",
+    "title": "Users",
+    "icon": "folder",
+    "requests": [
+      {
+        "requestId": "c23f1b57-5f3f-40f6-9585-184746b03bb7",
+        "method": "GET",
+        "name": "Create user",
+        "url": "",
+        "params": {},
+        "headers": {},
+        "body": {},
+        "auth": {
+          "type": "none"
+        },
+        "response": null
+      },
+      {
+        "requestId": "801ad407-2866-428d-a830-a08d151ce457",
+        "method": "POST",
+        "name": "get user",
+        "url": "https://jsonplaceholder.typicode.com/posts/1",
+        "params": {},
+        "headers": {},
+        "body": {},
+        "auth": {
+          "type": "none"
+        },
+        "response": null
+      },
+      {
+        "requestId": "d06ef207-ce1d-457c-945a-af7559b8d4bc",
+        "method": "DELETE",
+        "name": "delete user",
+        "url": "https://httpbin.org/get",
+        "params": {},
+        "headers": {},
+        "body": {},
+        "auth": {
+          "type": "none"
+        },
+        "response": null
+      }
+    ],
+    "isExpanded": true
+  }
+]

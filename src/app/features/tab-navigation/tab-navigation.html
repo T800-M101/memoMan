@@ -40,8 +40,8 @@
       <select [(ngModel)]="selectedCollectionId" class="form-select mb-3">
         <option value="" disabled>Select a collection</option>
 
-        @for (col of collections(); track col.id) {
-        <option [value]="col.id">{{ col.title }}</option>
+        @for (col of collections(); track col.collectionId) {
+        <option [value]="col.collectionId">{{ col.title }}</option>
         }
 
         <option value="new" class="text-primary fw-bold border-top mt-1">

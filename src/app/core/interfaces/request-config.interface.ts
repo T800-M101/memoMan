@@ -1,4 +1,5 @@
 export interface RequestConfig {
+  requestId: string;
   method: string;
   url: string;
 

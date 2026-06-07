@@ -1,4 +1,4 @@
-import { computed, inject, Injectable, signal } from '@angular/core';
+import { computed, effect, inject, Injectable, signal } from '@angular/core';
 import { RequestConfig } from '../interfaces/request-config.interface';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { lastValueFrom, Observable } from 'rxjs';
@@ -35,9 +35,61 @@ export class RequestService {
   isLoading = signal(false);
   requestError = signal<string | null>(null);
 
-  constructor() {
-    this.loadFromLocalStorage();
-    if (this.tabs().length === 0) this.addTab();
+constructor() {
+  this.initCollections();
+
+  const savedTabs = localStorage.getItem('memoman_tabs');
+  if (savedTabs) {
+    try {
+      this.tabs.set(JSON.parse(savedTabs));
+    } catch (e) {
+      this.tabs.set([]);
+    }
+  }
+
+  if (this.tabs().length > 0) {
+    const savedActiveId = localStorage.getItem('memoman_active_tab_id');
+    const lastTabId = this.tabs()[this.tabs().length - 1].id;
+
+    const targetId = this.tabs().find(t => t.id === savedActiveId)
+                     ? savedActiveId!
+                     : lastTabId;
+
+    this.activeTabId.set(targetId);
+  } else {
+    this.addTab();
+  }
+
+  effect(() => {
+    localStorage.setItem('memoman_tabs', JSON.stringify(this.tabs()));
+  });
+
+  effect(() => {
+    localStorage.setItem('memoman_active_tab_id', this.activeTabId());
+  });
+}
+
+  private readonly SERVER_URL = 'http://localhost:3001';
+
+  async initCollections() {
+    try {
+      const remoteData = await lastValueFrom(
+        this.http.get<ApiCollection[]>(`${this.SERVER_URL}/api/collections`),
+      );
+      this.collections.set(remoteData);
+      localStorage.setItem('memoman_collections', JSON.stringify(remoteData));
+    } catch (e) {
+      console.error('Error loading from server', e);
+      const local = localStorage.getItem('memoman_collections');
+      if (local) this.collections.set(JSON.parse(local));
+    }
+  }
+
+  saveCollections(collections: ApiCollection[]) {
+    this.collections.set(collections);
+    localStorage.setItem('memoman_collections', JSON.stringify(collections));
+
+    this.http.post(`${this.SERVER_URL}/api/collections`, collections).subscribe();
   }
 
   isUrlInvalid(): boolean {
@@ -61,6 +113,7 @@ export class RequestService {
   }
 
   private requestConfig = signal<RequestConfig>({
+    requestId: '',
     method: 'GET',
     url: '',
 
@@ -164,6 +217,7 @@ export class RequestService {
 
   resetRequest() {
     this.requestConfig.set({
+      requestId: '',
       method: 'GET',
       url: '',
       params: [],
@@ -254,17 +308,6 @@ export class RequestService {
     };
   }
 
-  // private buildBackendRequest(config: RequestConfig) {
-  //   return {
-  //     method: config.method,
-  //     headers: this.formatHeaders(config.headers),
-  //     body:
-  //       config.method !== 'GET' && config.body?.jsonContent
-  //         ? JSON.parse(config.body.jsonContent)
-  //         : null,
-  //   };
-  // }
-
   private formatHeaders(headers: any[]) {
     const h: Record<string, string> = {};
     headers.forEach((header) => {
@@ -275,7 +318,7 @@ export class RequestService {
 
   addTab() {
     const newTab: TabData = {
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
       name: 'New request',
       url: '',
       method: 'GET',
@@ -304,10 +347,13 @@ export class RequestService {
   }
 
   saveRequestToCollection(tabId: string, name: string, collectionId: string) {
+    console.log('TABID', tabId)
     const currentTab = this.tabs().find((t) => t.id === tabId);
+    console.log('CURRENT TAB', currentTab)
     if (!currentTab) return;
 
     const newRequest: ApiRequest = {
+      requestId: currentTab.id,
       method: (currentTab.method.toUpperCase() as HttpMethod) || 'GET',
       name: name,
       url: currentTab.url ?? '',
@@ -321,15 +367,14 @@ export class RequestService {
       response: currentTab.response,
     };
 
-    console.log('NEW',newRequest)
-
     this.collections.update((cols) => {
       return cols.map((c) =>
-        c.id === collectionId ? { ...c, requests: [...c.requests, newRequest] } : c,
+        c.collectionId === collectionId ? { ...c, requests: [...c.requests, newRequest] } : c,
       );
     });
 
     this.updateTabName(tabId, name);
+    this.saveCollections(this.collections());
   }
 
   // Helper to convert the table format [ {key: '...', value: '...'} ] to { key: value }
@@ -352,7 +397,7 @@ export class RequestService {
 
   createNewCollection(title: string, id: string = crypto.randomUUID()) {
     const newCollection: ApiCollection = {
-      id,
+      collectionId: id,
       title,
       icon: 'folder',
       requests: [],
@@ -360,6 +405,8 @@ export class RequestService {
     };
 
     this.collections.update((cols) => [...cols, newCollection]);
+
+  this.saveCollections(this.collections());
     return id;
   }
 
@@ -367,5 +414,50 @@ export class RequestService {
     return this.http.post('http://localhost:3001/parse-curl', { curl });
   }
 
-  
+  setActiveTab(id: string) {
+    const tab = this.tabs().find((t) => t.id === id);
+    if (!tab) return;
+
+    this.activeTabId.set(id);
+
+    this.requestConfig.set({
+      requestId: id,
+      method: tab.method as any,
+      url: tab.url ?? '',
+      params: tab.params,
+      headers: tab.headers,
+      auth: tab.auth as any,
+      body: tab.body as any,
+    });
+  }
+
+openRequestFromCollection(req: ApiRequest) {
+  const existingTab = this.tabs().find(t => t.id === req.requestId);
+
+  if (existingTab) {
+    this.setActiveTab(existingTab.id);
+    return;
+  }
+
+
+  const newTab: TabData = {
+    id: req.requestId,
+    name: req.name,
+    url: req.url || null,
+    method: req.method || 'GET',
+    params: Array.isArray(req.params) ? req.params : [],
+    headers: Array.isArray(req.headers) ? req.headers : [],
+    auth: req.auth || { type: 'none' },
+    body: {
+      type: req.body?.type ?? 'none',
+      jsonContent: req.body?.jsonContent ?? '{}'
+    },
+    response: null,
+    isLoading: false,
+    requestError: null,
+  };
+
+  this.tabs.update(t => [...t, newTab]);
+  this.setActiveTab(newTab.id);
+}
 }

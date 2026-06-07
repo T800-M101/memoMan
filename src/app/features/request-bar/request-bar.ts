@@ -11,7 +11,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 })
 export class RequestBar implements OnInit {
   tabId = input.required<string>();
-  
+
   private fb = inject(FormBuilder);
 
   private destroyRef = inject(DestroyRef);
@@ -28,42 +28,31 @@ export class RequestBar implements OnInit {
   });
 
   constructor() {
-    effect(() => {
-      this.requestService.resetTrigger();
+    effect(
+      () => {
+        const id = this.tabId();
+        const tab = this.requestService.tabs().find((t) => t.id === id);
 
-      this.requestForm.patchValue(
-        {
-          method: 'GET',
-          url: '',
-        },
-        {
-          emitEvent: false,
-        },
-      );
-
-      this.isTouched = false;
-    });
+        if (tab) {
+          this.requestForm.patchValue(
+            {
+              method: tab.method,
+              url: tab.url || '',
+            },
+            { emitEvent: false },
+          );
+        }
+      },
+      { allowSignalWrites: true },
+    );
   }
 
   ngOnInit() {
-    const config = this.requestService.config();
-
-    // Restore persisted state
-    this.requestForm.patchValue({
-      method: config.method,
-      url: config.url,
-    });
-
-    // Sync method
-    this.method?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((method) => {
-      if (!method) return;
-
-      this.requestService.updateMethod(method);
-    });
-
-    // Sync url
-    this.url?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((url) => {
-      this.requestService.updateUrl(url || '');
+    this.requestForm.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((val) => {
+      this.requestService.updateTabData(this.tabId(), {
+        method: val.method || 'GET',
+        url: val.url || '',
+      });
     });
   }
 
