@@ -1,4 +1,12 @@
-import { Component, computed, DestroyRef, inject, input, OnInit, signal } from '@angular/core';
+import {
+  Component,
+  computed,
+  DestroyRef,
+  inject,
+  input,
+  OnInit,
+  signal,
+} from '@angular/core';
 import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NgTemplateOutlet } from '@angular/common';
@@ -13,62 +21,69 @@ import { RequestService } from '../../core/services/request-service';
 })
 export class RequestTabs implements OnInit {
   tabId = input.required<string>();
+  requestService = inject(RequestService);
+  activeTab = signal<string>('params');
+  isCopied = signal(false);
 
   private fb = inject(FormBuilder);
-
-  requestService = inject(RequestService);
-
   private destroyRef = inject(DestroyRef);
 
-  activeTab = signal<string>('params');
+  private requestData = computed(() => {
+    const tab = this.requestService.tabs().find((t) => t.tabId === this.tabId());
+    if (!tab) return null;
+    if (tab.requestId) {
+      return this.requestService
+        .collections()
+        .flatMap((c) => c.requests)
+        .find((r) => r.requestId === tab.requestId);
+    }
+    return tab;
+  });
 
-  isCopied = signal(false);
+  // private syncFormEffect = effect(() => {
+  //   const data = this.requestData();
+  //   if (data) {
+  //     this.restoreForm(data);
+  //   }
+  // }, { allowSignalWrites: true });
 
   form: FormGroup = this.fb.group({
     params: this.fb.array([]),
-
     headers: this.fb.array([]),
-
     auth: this.fb.group({
       type: ['bearer'],
       bearerToken: [''],
       basicUsername: [''],
       basicPassword: [''],
     }),
-
-    body: this.fb.group({
-      type: ['json'],
-      jsonContent: [''],
-    }),
+    body: this.fb.group({ type: ['json'], jsonContent: [''] }),
   });
 
   authType = computed(() => this.auth.get('type')?.value);
-
   bodyType = computed(() => this.body.get('type')?.value);
 
   ngOnInit(): void {
-    const config = this.requestService.config();
-
-    this.restoreForm(config);
-
     this.initializeDefaults();
 
-    this.form.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((value) => {
-      this.requestService.updateTabsConfig({
-        params: value.params ?? [],
+    this.form.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((val) => {
+      const data = this.requestData();
+      if (!data) return;
 
-        headers: value.headers ?? [],
-
-        auth: value.auth,
-
-        body: value.body,
-      });
+      if (data.requestId) {
+        this.requestService.updateRequest(data.requestId, { ...data, ...val });
+      } else {
+        this.requestService.updateTabData(this.tabId(), val);
+      }
     });
   }
 
-  // ====================
-  // GETTERS
-  // ====================
+  private initializeDefaults() {
+    if (this.headers.length === 0) {
+      this.headers.push(
+        this.createKeyValueRow('Accept', 'application/json', 'Expected response type'),
+      );
+    }
+  }
 
   get params(): FormArray {
     return this.form.get('params') as FormArray;
@@ -86,38 +101,26 @@ export class RequestTabs implements OnInit {
     return this.form.get('body') as FormGroup;
   }
 
-  // ====================
-  // UI
-  // ====================
-
   setActiveTab(tab: string) {
     this.activeTab.set(tab);
   }
 
-  // ====================
-  // RESTORE FORM
-  // ====================
+  private restoreForm(data: any) {
+    if (JSON.stringify(this.form.getRawValue()) === JSON.stringify(data)) return;
 
-  private restoreForm(config: any) {
     this.params.clear();
+    data.params?.forEach((p: any) =>
+      this.params.push(this.createKeyValueRow(p.key, p.value, p.description)),
+    );
+
     this.headers.clear();
+    data.headers?.forEach((h: any) =>
+      this.headers.push(this.createKeyValueRow(h.key, h.value, h.description)),
+    );
 
-    config.params?.forEach((p: any) => {
-      this.params.push(this.createKeyValueRow(p.key, p.value, p.description));
-    });
-
-    config.headers?.forEach((h: any) => {
-      this.headers.push(this.createKeyValueRow(h.key, h.value, h.description));
-    });
-
-    this.auth.patchValue(config.auth ?? {});
-
-    this.body.patchValue(config.body ?? {});
+    this.auth.patchValue(data.auth || {}, { emitEvent: false });
+    this.body.patchValue(data.body || {}, { emitEvent: false });
   }
-
-  // ====================
-  // FORM HELPERS
-  // ====================
 
   private createKeyValueRow(key = '', value = '', description = ''): FormGroup {
     return this.fb.group({
@@ -143,33 +146,21 @@ export class RequestTabs implements OnInit {
     this.headers.removeAt(index);
   }
 
-  // ====================
-  // REQUEST EXECUTION
-  // ====================
-
   executeRequest() {
-    const config = this.requestService.config();
-    const curl = this.generateCurlCommand(config.method, config.url);
+    const data = this.requestData();
+    if (!data) return;
+
+    const curl = this.generateCurlCommand(data.method || 'GET', data.url || '');
+
+    console.log('cURL generado:', curl);
   }
 
-  // ====================
-  // cURL
-  // ====================
-
   generateCurlCommand(method: string, url: string): string {
-    const { params = [], headers = [], auth, body } = this.form.getRawValue();
-
-    // ====================
-    // Helpers
-    // ====================
+    const { params, headers, auth, body } = this.form.getRawValue();
 
     const escapeSingleQuotes = (value: string) => value.replace(/'/g, `'\\''`);
 
     const safeUrl = url?.trim() || '';
-
-    // ====================
-    // Query Params
-    // ====================
 
     const validParams = params.filter((p: any) => p.key?.trim());
 
@@ -189,15 +180,7 @@ export class RequestTabs implements OnInit {
       ? `${safeUrl}${safeUrl.includes('?') ? '&' : '?'}${queryString}`
       : safeUrl;
 
-    // ====================
-    // Base curl
-    // ====================
-
     let curl = `curl -X ${method.toUpperCase()} '${finalUrl}'`;
-
-    // ====================
-    // Headers
-    // ====================
 
     const addedHeaders = new Set<string>();
 
@@ -216,10 +199,6 @@ export class RequestTabs implements OnInit {
   -H '${escapeSingleQuotes(`${key}: ${value}`)}'`;
       });
 
-    // ====================
-    // Authorization
-    // ====================
-
     if (auth?.type === 'bearer' && auth.bearerToken?.trim()) {
       curl += ` \\
   -H 'Authorization: Bearer ${escapeSingleQuotes(auth.bearerToken.trim())}'`;
@@ -230,14 +209,9 @@ export class RequestTabs implements OnInit {
   -u '${escapeSingleQuotes(auth.basicUsername)}:${escapeSingleQuotes(auth.basicPassword ?? '')}'`;
     }
 
-    // ====================
-    // Body
-    // ====================
-
     const hasJsonBody = body?.type === 'json' && body.jsonContent?.trim();
 
     if (hasJsonBody) {
-      // Add Content-Type only if user didn't already add it
       if (!addedHeaders.has('content-type')) {
         curl += ` \\
   -H 'Content-Type: application/json'`;
@@ -251,30 +225,24 @@ export class RequestTabs implements OnInit {
   }
 
   async copyCurlToClipboard() {
-    if (this.requestService.isUrlInvalid()) {
-      console.warn('Invalid URL');
+    const data = this.requestData();
 
+    if (!data || !data.url || data.url.trim() === '') {
+      console.warn('Invalid URL');
       return;
     }
 
     try {
-      const config = this.requestService.config();
+      const curl = this.generateCurlCommand(data.method || 'GET', data.url);
 
-      await navigator.clipboard.writeText(this.generateCurlCommand(config.method, config.url));
+      await navigator.clipboard.writeText(curl);
 
       this.isCopied.set(true);
-
-      setTimeout(() => {
-        this.isCopied.set(false);
-      }, 2000);
+      setTimeout(() => this.isCopied.set(false), 2000);
     } catch (err) {
       console.error('Clipboard API not available:', err);
     }
   }
-
-  // ====================
-  // JSON
-  // ====================
 
   formatJson() {
     const raw = this.body.get('jsonContent')?.value;
@@ -316,18 +284,20 @@ export class RequestTabs implements OnInit {
     this.body.get('jsonContent')?.setValue('');
   }
 
-  private initializeDefaults() {
-    if (this.headers.length === 0) {
-      this.headers.push(
-        this.createKeyValueRow('Accept', 'application/json', 'Expected response type'),
-      );
-    }
-  }
-
   resetRequest() {
-    this.requestService.resetRequest();
+    const data = this.requestData();
+    if (!data) return;
 
-    this.restoreForm(this.requestService.config());
+    this.restoreForm(data);
+    if (!data.requestId) {
+      this.requestService.updateTabData(this.tabId(), {
+        url: '',
+        method: 'GET',
+        params: [],
+        headers: [],
+        body: { type: 'none', jsonContent: '{}' },
+      });
+    }
 
     this.activeTab.set('params');
   }
@@ -339,5 +309,20 @@ export class RequestTabs implements OnInit {
     const hasBody = !!formValue.body.jsonContent?.trim();
 
     return !hasParams && !hasHeaders && !hasBody;
+  }
+
+  isUrlInvalid(): boolean {
+    const data = this.requestData();
+
+    if (!data || !data.url || data.url.trim().length === 0) {
+      return true;
+    }
+
+    try {
+      new URL(data.url);
+      return false;
+    } catch {
+      return true;
+    }
   }
 }

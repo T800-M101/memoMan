@@ -1,5 +1,5 @@
 export interface TabData {
-  id: string;
+  tabId: string;
   name: string;
   url: string | null;
   method: string;
@@ -10,4 +10,5 @@ export interface TabData {
   response: any;
   isLoading: boolean;
   requestError: string | null;
+  requestId: string | null;
 }

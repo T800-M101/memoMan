@@ -1,6 +1,6 @@
 import { Component, input, output, signal } from '@angular/core';
 import { RequestItem } from '../request-item/request-item';
-import { ApiRequest } from '../../../../shared/interfaces/api-request.interface';
+import { ApiRequest } from '../../../../core/interfaces/api-request.interface';
 
 @Component({
   selector: 'app-collection-item',

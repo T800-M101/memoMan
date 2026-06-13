@@ -4,16 +4,15 @@
   <div class="d-flex justify-content-end align-items-center gap-2 mb-2">
 
     <!-- Copy cURL -->
-    <button
-      type="button"
-      class="btn btn-sm"
-      [class.btn-outline-secondary]="!isCopied()"
-      [class.btn-success]="isCopied()"
-      (click)="copyCurlToClipboard()"
-      [disabled]="isCopied() || requestService.isUrlInvalid()">
-      <i class="fas me-1" [class.fa-terminal]="!isCopied()" [class.fa-check]="isCopied()"></i>
-      {{ isCopied() ? 'Copied!' : 'Copy cURL' }}
-    </button>
+   <button
+  type="button"
+  class="btn btn-sm"
+  [class.btn-outline-secondary]="!isCopied()"
+  [class.btn-success]="isCopied()"
+  (click)="copyCurlToClipboard()"
+  [disabled]="isCopied() || isUrlInvalid()"> <i class="fas me-1" [class.fa-terminal]="!isCopied()" [class.fa-check]="isCopied()"></i>
+  {{ isCopied() ? 'Copied!' : 'Copy cURL' }}
+</button>
 
     <!-- Reset Request -->
     <button

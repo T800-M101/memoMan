@@ -1,3 +1,5 @@
+import { ApiResponse } from "./api-response.interface";
+
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
 
 export interface ApiRequest {
@@ -15,19 +17,6 @@ export interface ApiRequest {
   response?: ApiResponse;
 }
 
-export interface ApiResponse {
-  status: number;
-  statusText: string;
-  time: number;
-  size: string;
-  body: any;
-  headers?: Record<string, string>;
-}
 
-export interface ApiCollection {
-  collectionId: string;
-  title: string;
-  icon: string;
-  requests: ApiRequest[];
-  isExpanded?: boolean;
-}
+
+

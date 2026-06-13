@@ -12,16 +12,15 @@ import { TabNavigation } from '../tab-navigation/tab-navigation';
   styleUrl: './workspace.scss',
 })
 export class Workspace {
-
   requestService = inject(RequestService);
+  tabs = this.requestService.tabs;
+  activeTabId = this.requestService.activeTabId;
 
-  isTabsCollapsed = signal<boolean>(false);
+  isTabsCollapsed = signal(false);
 
   toggleTabs() {
-    this.isTabsCollapsed.update((val) => !val);
+    this.isTabsCollapsed.update(v => !v);
   }
-
-  activeTabId = this.requestService.activeTabId;
 
 
 }

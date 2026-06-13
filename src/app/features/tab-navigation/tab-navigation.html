@@ -1,20 +1,20 @@
 <div class="tabs-container">
-  @for (tab of tabs(); track tab.id) {
-  <div class="tab-item" [class.active]="activeTabId() === tab.id" (click)="selectTab(tab.id)">
+  @for (tab of tabs(); track tab.tabId) {
+  <div class="tab-item" [class.active]="activeTabId() === tab.tabId" (click)="selectTab(tab.tabId)">
     <span class="tab-title">
       {{ tab.name }}
-      @if (isNew(tab.id) || isModified(tab.id)) {
+      @if (isNew(tab.tabId) || isModified(tab.tabId)) {
       <span class="dirty-indicator" title="Unsaved changes">•</span>
       }
     </span>
 
     <div class="tab-actions">
-      @if (isNew(tab.id) || isModified(tab.id)) {
-      <button class="save-btn" (click)="saveRequest(tab.id, $event)">
-        <i class="fas fa-save" [class.text-danger]="isModified(tab.id)"></i>
+      @if (isNew(tab.tabId) || isModified(tab.tabId)) {
+      <button class="save-btn" (click)="saveRequest(tab.tabId, $event)">
+        <i class="fas fa-save" [class.text-danger]="isModified(tab.tabId)"></i>
       </button>
       }
-      <button class="close-btn" (click)="closeTab(tab.id, $event)">
+      <button class="close-btn" (click)="closeTab(tab.tabId, $event)">
         <i class="fas fa-times"></i>
       </button>
     </div>
@@ -36,29 +36,47 @@
       <input [(ngModel)]="requestName" placeholder="Enter request name" class="form-control" />
     </div>
 
-    <div class="mb-3">
-      <label class="form-label small">Select Collection</label>
-      <select [(ngModel)]="selectedCollectionId" class="form-select mb-3">
-        <option value="" disabled>Select a collection</option>
+    <!-- Conditional: Show select if there are collections, input if there are no.-->
+    @if (collections().length > 0) {
+      <div class="mb-3">
+        <label class="form-label small">Select Collection</label>
+        <select [(ngModel)]="selectedCollectionId" class="form-select">
+          <option value="" disabled>Select a collection</option>
 
-        @for (col of collections(); track col.collectionId) {
-        <option [value]="col.collectionId">{{ col.title }}</option>
+          @for (col of collections(); track col.collectionId) {
+            <option [value]="col.collectionId">{{ col.title }}</option>
+          }
+
+          <option value="new" class="text-primary fw-bold border-top mt-1">
+            + Create new collection
+          </option>
+        </select>
+
+        <!-- Input for new collection if you select "Create new" -->
+        @if (selectedCollectionId() === 'new') {
+          <input
+            [(ngModel)]="newCollectionTitle"
+            placeholder="Name of the new collection"
+            class="form-control mt-2" />
         }
-
-        <option value="new" class="text-primary fw-bold border-top mt-1">
-          + Create new collection
-        </option>
-      </select>
-
-      @if (selectedCollectionId() === 'new') {
-      <input [(ngModel)]="newCollectionTitle" placeholder="Name of the new collection" class="form-control mb-3" />
-      }
-    </div>
+      </div>
+    } @else {
+      <!-- No collections: show input to create a new one -->
+      <div class="mb-3">
+        <label class="form-label small">Collection Name</label>
+        <input
+          [(ngModel)]="newCollectionTitle"
+          placeholder="Enter collection name"
+          class="form-control" />
+      </div>
+    }
 
     <div class="actions mt-3 d-flex justify-content-end">
       <button (click)="closeModal()" class="btn btn-secondary btn-sm">Cancel</button>
-      <button (click)="confirmSave()" class="btn btn-primary btn-sm ms-2"
-        [disabled]="!requestName() || !selectedCollectionId()">
+      <button
+        (click)="confirmSave()"
+        class="btn btn-primary btn-sm ms-2"
+        [disabled]="isSaveDisabled()">
         Save
       </button>
     </div>

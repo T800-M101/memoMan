@@ -1,4 +1,4 @@
-export interface BackendResponse {
+export interface ProxyResponse {
   status: number;
   statusText: string;
   headers: any;
@@ -6,7 +6,3 @@ export interface BackendResponse {
   body: any;
   timestamp: string;
 }
-
-
-
-

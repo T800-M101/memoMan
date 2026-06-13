@@ -1,146 +1,87 @@
-import { computed, effect, inject, Injectable, signal } from '@angular/core';
-import { RequestConfig } from '../interfaces/request-config.interface';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { lastValueFrom, Observable } from 'rxjs';
-import {
-  BackendResponse,
-  ProxyRequest,
-  ProxyResponse,
-} from '../interfaces/backend.response.interface';
+import { Injectable, signal } from '@angular/core';
+import { catchError, lastValueFrom, Observable, of } from 'rxjs';
+
+import { ApiCollection } from '../interfaces/api-collection.interface';
+import { ApiRequest, HttpMethod } from '../interfaces/api-request.interface';
+import { BackendResponse } from '../interfaces/backend.response.interface';
+import { ProxyRequest } from '../interfaces/proxy-request.interface';
+import { ProxyResponse } from '../interfaces/proxy-response.interface';
 import { TabData } from '../interfaces/tab-data.interface';
-import {
-  ApiCollection,
-  ApiRequest,
-  HttpMethod,
-} from '../../shared/interfaces/api-request.interface';
-import { mapKeyValueToRecord } from '../helpers/mapper';
+
+// ============================================================================
+// REQUEST SERVICE
+// ============================================================================
 
 @Injectable({
   providedIn: 'root',
 })
 export class RequestService {
-  collections = signal<ApiCollection[]>([]);
-  tabs = signal<TabData[]>([]);
-  activeTabId = signal<string>('');
-  activeTab = computed(() => this.tabs().find((t) => t.id === this.activeTabId()));
+  // ==========================================================================
+  // DEPENDENCIES & PROPERTIES
+  // ==========================================================================
 
-  private readonly STORAGE_KEY = 'memoman_request_config';
-  private http = inject(HttpClient);
-
-  private proxyUrl = 'http://localhost:3001/proxy';
-
-  private sendCounter = signal<number>(0);
-  resetTrigger = signal(0);
-
-  response = signal<BackendResponse | null>(null);
-  isLoading = signal(false);
-  requestError = signal<string | null>(null);
-
-  constructor() {
-    this.initCollections();
-
-    const savedTabs = localStorage.getItem('memoman_tabs');
-    if (savedTabs) {
-      try {
-        this.tabs.set(JSON.parse(savedTabs));
-      } catch (e) {
-        this.tabs.set([]);
-      }
-    }
-
-    if (this.tabs().length > 0) {
-      const savedActiveId = localStorage.getItem('memoman_active_tab_id');
-      const lastTabId = this.tabs()[this.tabs().length - 1].id;
-
-      const targetId = this.tabs().find((t) => t.id === savedActiveId) ? savedActiveId! : lastTabId;
-
-      this.activeTabId.set(targetId);
-    } else {
-      this.addTab();
-    }
-
-    effect(() => {
-      localStorage.setItem('memoman_tabs', JSON.stringify(this.tabs()));
-    });
-
-    effect(() => {
-      localStorage.setItem('memoman_active_tab_id', this.activeTabId());
-    });
-  }
+  constructor(private http: HttpClient) {}
 
   private readonly SERVER_URL = 'http://localhost:3001';
+  private proxyUrl = 'http://localhost:3001/proxy';
 
-  async initCollections() {
-    try {
-      const remoteData = await lastValueFrom(
-        this.http.get<ApiCollection[]>(`${this.SERVER_URL}/api/collections`),
-      );
-      this.collections.set(remoteData);
-      localStorage.setItem('memoman_collections', JSON.stringify(remoteData));
-    } catch (e) {
-      console.error('Error loading from server', e);
-      const local = localStorage.getItem('memoman_collections');
-      if (local) this.collections.set(JSON.parse(local));
-    }
+  // ==========================================================================
+  // PRIVATE SIGNALS
+  // ==========================================================================
+
+  private sendCounter = signal<number>(0);
+
+  // ==========================================================================
+  // PUBLIC SIGNALS - Collections
+  // ==========================================================================
+
+  collections = signal<ApiCollection[]>([]);
+
+  // ==========================================================================
+  // PUBLIC SIGNALS - Tabs
+  // ==========================================================================
+
+  tabs = signal<TabData[]>([]);
+  activeTabId = signal<string | null>(null);
+
+  // ==========================================================================
+  // PUBLIC SIGNALS - Request State
+  // ==========================================================================
+
+  requestError = signal<string | null>(null);
+  response = signal<BackendResponse | null>(null);
+  isLoading = signal(false);
+
+  // ==========================================================================
+  // PRIVATE UTILITIES
+  // ==========================================================================
+
+  /**
+   * Checks if the URL points to a local development server
+   */
+  private isLocalUrl(url: string): boolean {
+    return url.includes('localhost') || url.includes('127.0.0.1');
   }
 
-  saveCollections(collections: ApiCollection[]) {
-    this.collections.set(collections);
-    localStorage.setItem('memoman_collections', JSON.stringify(collections));
-
-    this.http.post(`${this.SERVER_URL}/api/collections`, collections).subscribe();
+  /**
+   * Formats an array of headers into a key-value record object
+   */
+  private formatHeaders(headers: any[]): Record<string, string> {
+    const h: Record<string, string> = {};
+    headers.forEach((header) => {
+      if (header.key && header.value) h[header.key] = header.value;
+    });
+    return h;
   }
 
-  isUrlInvalid(): boolean {
-    let url = this.requestConfig().url?.trim();
+  // ==========================================================================
+  // PROXY REQUEST METHODS
+  // ==========================================================================
 
-    if (!url) {
-      return true;
-    }
-
-    // Auto-add https:// if no protocol is specified
-    if (!url.startsWith('http://') && !url.startsWith('https://')) {
-      url = 'https://' + url;
-    }
-
-    try {
-      new URL(url);
-      return false;
-    } catch {
-      return true;
-    }
-  }
-
-  private requestConfig = signal<RequestConfig>({
-    requestId: '',
-    method: 'GET',
-    url: '',
-
-    params: [],
-
-    headers: [],
-
-    auth: {
-      type: 'bearer',
-      bearerToken: '',
-      basicUsername: '',
-      basicPassword: '',
-    },
-
-    body: {
-      type: 'json',
-      jsonContent: '',
-    },
-  });
-
-  // ====================
-  // PUBLIC API
-  // ====================
-
-  config() {
-    return this.requestConfig();
-  }
-
+  /**
+   * Sends an HTTP request through the backend proxy
+   */
   sendRequest(request: ProxyRequest): Observable<ProxyResponse> {
     const params = new HttpParams().set('url', request.url);
 
@@ -155,133 +96,9 @@ export class RequestService {
     );
   }
 
-  triggerSend() {
-    this.sendCounter.update((count) => count + 1);
-    this.executeRequest();
-  }
-
-  updateMethod(method: string) {
-    this.patchConfig({
-      method,
-    });
-
-    const activeId = this.activeTabId();
-    if (activeId) {
-      this.updateTabData(activeId, { method });
-    }
-  }
-
-  updateUrl(url: string) {
-    this.patchConfig({
-      url,
-    });
-  }
-
-  updateTabsConfig(data: Partial<RequestConfig>) {
-    this.patchConfig(data);
-  }
-
-  // ====================
-  // INTERNAL
-  // ====================
-
-  private patchConfig(partial: Partial<RequestConfig>) {
-    this.requestConfig.update((current) => {
-      const updated = {
-        ...current,
-        ...partial,
-      };
-
-      this.saveToLocalStorage(updated);
-
-      return updated;
-    });
-  }
-
-  private saveToLocalStorage(config: RequestConfig) {
-    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(config));
-  }
-
-  private loadFromLocalStorage() {
-    const saved = localStorage.getItem(this.STORAGE_KEY);
-
-    if (!saved) return;
-
-    try {
-      this.requestConfig.set(JSON.parse(saved));
-    } catch {
-      localStorage.removeItem(this.STORAGE_KEY);
-    }
-  }
-
-  resetRequest() {
-    this.requestConfig.set({
-      requestId: '',
-      method: 'GET',
-      url: '',
-      params: [],
-      headers: [],
-      auth: {
-        type: 'bearer',
-        bearerToken: '',
-        basicUsername: '',
-        basicPassword: '',
-      },
-      body: {
-        type: 'json',
-        jsonContent: '',
-      },
-    });
-
-    this.resetTrigger.update((v) => v + 1);
-  }
-
-  async executeRequest() {
-    const config = this.requestConfig();
-
-    if (this.isUrlInvalid()) {
-      this.requestError.set('Invalid URL');
-      return;
-    }
-
-    this.isLoading.set(true);
-    this.requestError.set(null);
-
-    const isLocal = this.isLocalUrl(config.url);
-
-    const payload: ProxyRequest = {
-      url: config.url,
-      method: config.method,
-      headers: this.formatHeaders(config.headers),
-      body:
-        config.method !== 'GET' && config.body?.jsonContent
-          ? JSON.parse(config.body.jsonContent)
-          : null,
-    };
-
-    try {
-      const result = isLocal
-        ? await this.executeDirectRequest(payload)
-        : await lastValueFrom(this.sendRequest(payload));
-
-      if (typeof result.body === 'string') {
-        try {
-          result.body = JSON.parse(result.body);
-        } catch {}
-      }
-
-      this.response.set(result);
-    } catch (err: any) {
-      this.requestError.set('Connection error');
-    } finally {
-      this.isLoading.set(false);
-    }
-  }
-
-  private isLocalUrl(url: string): boolean {
-    return url.includes('localhost') || url.includes('127.0.0.1');
-  }
-
+  /**
+   * Executes a request directly without going through the proxy (for local URLs)
+   */
   private async executeDirectRequest(payload: ProxyRequest): Promise<BackendResponse> {
     const start = Date.now();
 
@@ -306,167 +123,244 @@ export class RequestService {
     };
   }
 
-  private formatHeaders(headers: any[]) {
-    const h: Record<string, string> = {};
-    headers.forEach((header) => {
-      if (header.key && header.value) h[header.key] = header.value;
-    });
-    return h;
-  }
+  /**
+   * Main request executor that handles both local and remote URLs
+   */
+  async executeRequest(data?: ApiRequest | TabData) {
+    if (!data || !data.url) {
+      this.requestError.set('Invalid URL or missing request data');
+      return;
+    }
 
-  addTab() {
-    const newTab: TabData = {
-      id: crypto.randomUUID(),
-      name: 'New request',
-      url: '',
-      method: 'GET',
-      params: [{ key: '', value: '', description: '' }],
-      headers: [{ key: '', value: '', description: '' }],
-      auth: { type: 'none' },
-      body: { type: 'none', jsonContent: '{}' },
-      response: null,
-      isLoading: false,
-      requestError: null,
+    this.isLoading.set(true);
+    this.requestError.set(null);
+
+    const isLocal = this.isLocalUrl(data.url);
+
+    const payload: ProxyRequest = {
+      url: data.url,
+      method: (data as any).method || 'GET',
+      headers: this.formatHeaders((data as any).headers || []),
+      body:
+        (data as any).method !== 'GET' && (data as any).body?.jsonContent
+          ? JSON.parse((data as any).body.jsonContent)
+          : null,
     };
-    this.tabs.update((t) => [...t, newTab]);
-    this.activeTabId.set(newTab.id);
-  }
 
-  removeTab(id: string) {
-    this.tabs.update((t) => t.filter((tab) => tab.id !== id));
+    try {
+      const result = isLocal
+        ? await this.executeDirectRequest(payload)
+        : await lastValueFrom(this.sendRequest(payload));
 
-    if (this.activeTabId() === id && this.tabs().length > 0) {
-      this.activeTabId.set(this.tabs()[this.tabs().length - 1].id);
+      if (typeof result.body === 'string') {
+        try {
+          result.body = JSON.parse(result.body);
+        } catch {}
+      }
+
+      this.response.set(result);
+    } catch (err: any) {
+      this.requestError.set('Connection error');
+    } finally {
+      this.isLoading.set(false);
     }
   }
 
-  updateTabData(id: string, partialData: Partial<TabData>) {
-    this.tabs.update((tabs) => tabs.map((t) => (t.id === id ? { ...t, ...partialData } : t)));
+  /**
+   * Triggers the send counter and executes the current request
+   */
+  triggerSend() {
+    this.sendCounter.update((count) => count + 1);
+    this.executeRequest();
   }
 
-  updateTabName(tabId: string, newName: string) {
-    this.tabs.update((tabs) =>
-      tabs.map((tab) => (tab.id === tabId ? { ...tab, name: newName } : tab)),
-    );
-  }
+  // ==========================================================================
+  // CURL PARSING
+  // ==========================================================================
 
-  createNewCollection(title: string, id: string = crypto.randomUUID()) {
-    const newCollection: ApiCollection = {
-      collectionId: id,
-      title,
-      icon: 'folder',
-      requests: [],
-      isExpanded: true,
-    };
-
-    this.collections.update((cols) => [...cols, newCollection]);
-
-    this.saveCollections(this.collections());
-    return id;
-  }
-
+  /**
+   * Parses a cURL command string into a request object
+   */
   parseCurl(curl: string): Observable<any> {
     return this.http.post('http://localhost:3001/parse-curl', { curl });
   }
 
-  setActiveTab(id: string) {
-    const tab = this.tabs().find((t) => t.id === id);
-    if (!tab) return;
+  // ==========================================================================
+  // COLLECTION MANAGEMENT
+  // ==========================================================================
 
-    this.activeTabId.set(id);
-
-    this.requestConfig.set({
-      requestId: id,
-      method: tab.method as any,
-      url: tab.url ?? '',
-      params: tab.params,
-      headers: tab.headers,
-      auth: tab.auth as any,
-      body: tab.body as any,
-    });
+  /**
+   * Adds a new collection to the list
+   */
+  addCollection(collection: ApiCollection) {
+    this.collections.update((cols) => [...cols, collection]);
+    this.syncToServer();
   }
 
-  openRequestFromCollection(req: ApiRequest) {
-    const existingTab = this.tabs().find((t) => t.id === req.requestId);
+  /**
+   * Adds a request to a specific collection
+   */
+  addRequestToCollection(collectionId: string, request: ApiRequest) {
+    this.collections.update((cols) =>
+      cols.map((c) =>
+        c.collectionId === collectionId ? { ...c, requests: [...c.requests, request] } : c,
+      ),
+    );
+    this.syncToServer();
+  }
 
-    if (existingTab) {
-      this.setActiveTab(existingTab.id);
-      return;
-    }
+  /**
+   * Updates an existing request in its collection
+   */
+  updateRequest(requestId: string, updatedRequest: ApiRequest) {
+    this.collections.update((cols) =>
+      cols.map((c) => ({
+        ...c,
+        requests: c.requests.map((r) => (r.requestId === requestId ? updatedRequest : r)),
+      })),
+    );
+    this.syncToServer();
+  }
 
+  /**
+   * Deletes a request from its collection
+   */
+  deleteRequest(requestId: string) {
+    this.collections.update((cols) =>
+      cols.map((c) => ({ ...c, requests: c.requests.filter((r) => r.requestId !== requestId) })),
+    );
+    this.syncToServer();
+  }
+
+  /**
+   * Finds a request by its ID across all collections
+   */
+  findRequestById(requestId: string) {
+    return this.collections()
+      .flatMap((c) => c.requests)
+      .find((r) => r.requestId === requestId);
+  }
+
+  /**
+   * Synchronizes collections data with the backend server
+   */
+  private syncToServer() {
+    const data = this.collections();
+
+    this.http
+      .post(`${this.SERVER_URL}/api/collections/sync`, data)
+      .pipe(
+        catchError((err) => {
+          console.error('Error synchronizing with the server:', err);
+          return of(null);
+        }),
+      )
+      .subscribe();
+  }
+
+  // ==========================================================================
+  // TAB MANAGEMENT
+  // ==========================================================================
+
+  /**
+   * Creates and adds a new tab to the workspace
+   */
+  addTab(tab?: Partial<TabData>) {
     const newTab: TabData = {
-      id: req.requestId,
-      name: req.name,
-      url: req.url || null,
-      method: req.method || 'GET',
-      params: Array.isArray(req.params) ? req.params : [],
-      headers: Array.isArray(req.headers) ? req.headers : [],
-      auth: req.auth || { type: 'none' },
-      body: {
-        type: req.body?.type ?? 'none',
-        jsonContent: req.body?.jsonContent ?? '{}',
-      },
-      response: null,
-      isLoading: false,
-      requestError: null,
+      tabId: tab?.tabId || crypto.randomUUID(),
+      name: tab?.name || 'New Request',
+      url: tab?.url || '',
+      method: tab?.method || 'GET',
+      params: tab?.params || [],
+      headers: tab?.headers || [],
+      auth: tab?.auth || { type: 'none' },
+      body: tab?.body || { type: 'none', jsonContent: '{}' },
+      response: tab?.response || null,
+      isLoading: tab?.isLoading ?? false,
+      requestError: tab?.requestError || null,
+      requestId: tab?.requestId || null,
     };
 
     this.tabs.update((t) => [...t, newTab]);
-    this.setActiveTab(newTab.id);
+    this.activeTabId.set(newTab.tabId);
   }
 
-  isTabDirty(tab: TabData): boolean {
-    const originalReq = this.collections()
-      .flatMap((c) => c.requests)
-      .find((r) => r.requestId === tab.id);
-
-    if (!originalReq) return false;
-
-    const urlChanged = tab.url !== originalReq.url;
-    const methodChanged = tab.method !== originalReq.method;
-    const tabBody = JSON.stringify(JSON.parse(tab.body?.jsonContent || '{}'));
-    const origBody = JSON.stringify(originalReq.body || {});
-    const bodyChanged = tabBody !== origBody;
-
-    return urlChanged || methodChanged || bodyChanged;
+  /**
+   * Removes a tab by its ID
+   */
+  removeTab(id: string) {
+    this.tabs.update((t) => t.filter((x) => x.tabId !== id));
   }
 
-  saveRequestToCollection(tabId: string, name: string, collectionId: string) {
-    this.collections.update((cols) => {
-      return cols.map((c) => {
-        const requestsWithoutOld = c.requests.filter((r) => r.requestId !== tabId);
-
-        if (c.collectionId === collectionId) {
-          return {
-            ...c,
-            requests: [...requestsWithoutOld, this.mapTabToRequest(tabId, name)],
-          };
-        }
-
-        return { ...c, requests: requestsWithoutOld };
-      });
-    });
-
-    this.updateTabName(tabId, name);
-    this.saveCollections(this.collections());
+  /**
+   * Sets the currently active tab
+   */
+  setActiveTab(id: string) {
+    this.activeTabId.set(id);
   }
 
-  private mapTabToRequest(tabId: string, name: string): ApiRequest {
-    const tab = this.tabs().find((t) => t.id === tabId)!;
+  /**
+   * Updates partial data of a specific tab
+   */
+  updateTabData(tabId: string, data: Partial<TabData>) {
+    this.tabs.update((tabs) => tabs.map((t) => (t.tabId === tabId ? { ...t, ...data } : t)));
+  }
 
-    return {
-      requestId: tab.id,
-      method: (tab.method.toUpperCase() as HttpMethod) || 'GET',
+  // ==========================================================================
+  // REQUEST PERSISTENCE
+  // ==========================================================================
+
+  /**
+   * Saves or updates a request from a tab to a collection
+   */
+  saveOrUpdateRequest(tabId: string, name: string, collectionId: string) {
+    const tab = this.tabs().find((t) => t.tabId === tabId);
+    if (!tab) return;
+
+    // 1. Safe method casting
+    const method = (tab.method as HttpMethod) || 'GET';
+
+    // 2. Transform headers: from Array to Record<string, string>
+    const formattedHeaders: Record<string, string> = Array.isArray(tab.headers)
+      ? tab.headers.reduce(
+          (acc, h: any) => {
+            if (h.key) acc[h.key] = h.value;
+            return acc;
+          },
+          {} as Record<string, string>,
+        )
+      : tab.headers || {};
+
+    // 3. Transform params: from Array to Record<string, string>
+    const formattedParams: Record<string, string> = Array.isArray(tab.params)
+      ? tab.params.reduce(
+          (acc, p: any) => {
+            if (p.key) acc[p.key] = p.value;
+            return acc;
+          },
+          {} as Record<string, string>,
+        )
+      : tab.params || {};
+
+    // 4. Build the request object complying with ApiRequest interface
+    const requestToSave: ApiRequest = {
+      requestId: tab.requestId || crypto.randomUUID(),
       name: name,
       url: tab.url || '',
-      params: mapKeyValueToRecord(tab.params),
-      headers: mapKeyValueToRecord(tab.headers),
-      body: tab.body?.jsonContent ? JSON.parse(tab.body.jsonContent) : null,
-      auth: {
-        type: tab.auth?.type || 'none',
-        token: tab.auth?.bearerToken || tab.auth?.basicUsername,
-      },
-      response: tab.response,
+      method: method,
+      params: formattedParams,
+      headers: formattedHeaders,
+      auth: tab.auth || { type: 'none' },
+      body: tab.body || { type: 'none', jsonContent: '{}' },
+      response: tab.response || null,
     };
+
+    // 5. Persistence logic
+    if (tab.requestId) {
+      this.updateRequest(tab.requestId, requestToSave);
+    } else {
+      this.addRequestToCollection(collectionId, requestToSave);
+      this.updateTabData(tabId, { requestId: requestToSave.requestId });
+    }
   }
 }

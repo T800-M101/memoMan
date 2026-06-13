@@ -16,7 +16,7 @@
 
     @if (isCreating()) {
     <div class="input-group mb-3 animate__animated animate__fadeIn">
-      <input [(ngModel)]="newCollectionName" (keyup.enter)="saveNewCollection()" placeholder="Nombre de la colección..."
+      <input [(ngModel)]="newCollectionName" (keyup.enter)="saveNewCollection()" placeholder="Collection name..."
         class="form-control form-control-sm" autofocus />
       <button class="btn btn-outline-success" (click)="saveNewCollection()">
         <i class="fas fa-check"></i>

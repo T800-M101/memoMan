@@ -2,10 +2,9 @@
   <app-tab-navigation></app-tab-navigation>
 
   <div class="tab-content-area">
-    @for (tab of requestService.tabs(); track tab.id) {
-      <div [hidden]="activeTabId() !== tab.id">
-
-        <app-request-bar [tabId]="tab.id"></app-request-bar>
+    @for (tab of tabs(); track tab.tabId) {
+      <div [hidden]="activeTabId() !== tab.tabId">
+        <app-request-bar [tabId]="tab.tabId"></app-request-bar>
 
         <div class="d-flex justify-content-start mb-2">
           <button class="btn-toggle-tabs" (click)="toggleTabs()">
@@ -15,11 +14,10 @@
         </div>
 
         <div class="tabs-wrapper" [class.hidden]="isTabsCollapsed()">
-          <app-request-tabs [tabId]="tab.id"></app-request-tabs>
+          <app-request-tabs [tabId]="tab.tabId"></app-request-tabs>
         </div>
 
-        <app-response-section [tabId]="tab.id" [class.expanded]="isTabsCollapsed()"></app-response-section>
-
+        <app-response-section [tabId]="tab.tabId" [class.expanded]="isTabsCollapsed()"></app-response-section>
       </div>
     }
   </div>

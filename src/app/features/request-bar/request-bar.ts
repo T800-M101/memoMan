@@ -1,7 +1,17 @@
-import { Component, DestroyRef, effect, inject, input, OnInit, signal } from '@angular/core';
+import {
+  Component,
+  computed,
+  DestroyRef,
+  effect,
+  inject,
+  input,
+  OnInit,
+  signal,
+} from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { RequestService } from '../../core/services/request-service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { HttpMethod } from '../../core/interfaces/api-request.interface';
 
 @Component({
   selector: 'app-request-bar',
@@ -10,47 +20,57 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
   styleUrl: './request-bar.scss',
 })
 export class RequestBar implements OnInit {
+  requestService = inject(RequestService);
+  isUrlFocused = signal<boolean>(false);
   tabId = input.required<string>();
-
-  private fb = inject(FormBuilder);
-
   private destroyRef = inject(DestroyRef);
 
-  requestService = inject(RequestService);
-
-  isUrlFocused = signal<boolean>(false);
-
+  private fb = inject(FormBuilder);
   requestForm = this.fb.group({
     method: ['GET'],
     url: [''],
   });
 
-  constructor() {
-    effect(
-      () => {
-        const id = this.tabId();
-        const tab = this.requestService.tabs().find((t) => t.id === id);
+  private requestData = computed(() => {
+    const tab = this.requestService.tabs().find((t) => t.tabId === this.tabId());
+    if (!tab || !tab.requestId) return null;
 
-        if (tab) {
-          this.requestForm.patchValue(
-            {
-              method: tab.method,
-              url: tab.url || '',
-            },
-            { emitEvent: false },
-          );
-        }
-      },
-      { allowSignalWrites: true },
-    );
+    return this.requestService
+      .collections()
+      .flatMap((c) => c.requests)
+      .find((r) => r.requestId === tab.requestId);
+  });
+
+  constructor() {
+    effect(() => {
+      const data = this.requestData();
+      if (data) {
+        this.requestForm.patchValue(
+          {
+            method: data.method,
+            url: data.url,
+          },
+          { emitEvent: false },
+        );
+      }
+    });
   }
 
   ngOnInit() {
     this.requestForm.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((val) => {
-      this.requestService.updateTabData(this.tabId(), {
-        method: val.method || 'GET',
-        url: val.url || '',
-      });
+      const currentData = this.requestData();
+      if (currentData) {
+        this.requestService.updateRequest(currentData.requestId, {
+          ...currentData,
+          method: (val.method as HttpMethod) || 'GET',
+          url: val.url || '',
+        });
+      } else {
+        this.requestService.updateTabData(this.tabId(), {
+          method: (val.method as HttpMethod) || 'GET',
+          url: val.url || '',
+        });
+      }
     });
   }
 
